@@ -331,38 +331,183 @@ class StructuredLogger:
         return self._output.getvalue()
 
 
-class NullTraceSpan:
-    """Trace span that does nothing."""
-    
+class InMemoryTraceSpan:
+    """
+    Trace span that stores data in memory for testing.
+
+    Captures all span operations for verification in tests.
+    Supports context manager protocol for automatic end() calls.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        parent: InMemoryTraceSpan | None = None,
+        attributes: dict[str, Any] | None = None,
+    ):
+        self._name = name
+        self._parent = parent
+        self._attributes: dict[str, Any] = dict(attributes) if attributes else {}
+        self._events: list[dict[str, Any]] = []
+        self._status: str | None = None
+        self._status_description: str | None = None
+        self._start_time = time.time()
+        self._end_time: float | None = None
+        self._children: list[InMemoryTraceSpan] = []
+
+        if parent:
+            parent._children.append(self)
+
+    @property
+    def name(self) -> str:
+        """Get span name."""
+        return self._name
+
+    @property
+    def parent(self) -> InMemoryTraceSpan | None:
+        """Get parent span."""
+        return self._parent
+
+    @property
+    def attributes(self) -> dict[str, Any]:
+        """Get span attributes."""
+        return self._attributes.copy()
+
+    @property
+    def events(self) -> list[dict[str, Any]]:
+        """Get span events."""
+        return list(self._events)
+
+    @property
+    def status(self) -> str | None:
+        """Get span status."""
+        return self._status
+
+    @property
+    def status_description(self) -> str | None:
+        """Get span status description."""
+        return self._status_description
+
+    @property
+    def duration_ms(self) -> float | None:
+        """Get span duration in milliseconds, or None if not ended."""
+        if self._end_time is None:
+            return None
+        return (self._end_time - self._start_time) * 1000
+
+    @property
+    def children(self) -> list[InMemoryTraceSpan]:
+        """Get child spans."""
+        return list(self._children)
+
+    @property
+    def is_ended(self) -> bool:
+        """Check if span has ended."""
+        return self._end_time is not None
+
     def set_attribute(self, key: str, value: Any) -> None:
-        pass
-    
+        """Set an attribute on the span."""
+        self._attributes[key] = value
+
     def add_event(self, name: str, attributes: dict[str, Any] | None = None) -> None:
-        pass
-    
+        """Add an event to the span."""
+        self._events.append({
+            "name": name,
+            "timestamp": time.time(),
+            "attributes": dict(attributes) if attributes else {},
+        })
+
     def set_status(self, status: str, description: str | None = None) -> None:
-        pass
-    
+        """Set the span status."""
+        self._status = status
+        self._status_description = description
+
     def end(self) -> None:
-        pass
-    
-    def __enter__(self) -> NullTraceSpan:
+        """End the span."""
+        if self._end_time is None:
+            self._end_time = time.time()
+
+    def __enter__(self) -> InMemoryTraceSpan:
         return self
-    
+
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        pass
+        if exc_type is not None:
+            self.set_status("ERROR", str(exc_val) if exc_val else None)
+        self.end()
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert span to dictionary for inspection."""
+        return {
+            "name": self._name,
+            "parent_name": self._parent._name if self._parent else None,
+            "attributes": self._attributes,
+            "events": self._events,
+            "status": self._status,
+            "status_description": self._status_description,
+            "duration_ms": self.duration_ms,
+            "is_ended": self.is_ended,
+            "children": [child._name for child in self._children],
+        }
 
 
-class NullTracingProvider:
-    """Tracing provider that creates null spans."""
-    
+class InMemoryTracingProvider:
+    """
+    Tracing provider that stores spans in memory for testing.
+
+    Useful for verifying tracing behavior in tests without external dependencies.
+    Tracks all spans created, supports parent-child relationships.
+
+    Example:
+        provider = InMemoryTracingProvider()
+        with provider.start_span("operation") as span:
+            span.set_attribute("user_id", "123")
+        assert provider.get_span("operation").attributes["user_id"] == "123"
+    """
+
+    def __init__(self):
+        self._spans: list[InMemoryTraceSpan] = []
+        self._active_span: InMemoryTraceSpan | None = None
+
     def start_span(
         self,
         name: str,
-        parent_span: Any | None = None,
+        parent_span: InMemoryTraceSpan | None = None,
         attributes: dict[str, Any] | None = None,
-    ) -> NullTraceSpan:
-        return NullTraceSpan()
+    ) -> InMemoryTraceSpan:
+        """Start a new trace span.
+
+        Note: Unlike OpenTelemetry, this does not automatically inherit
+        from _active_span. Use explicit parent_span for child spans.
+        """
+        span = InMemoryTraceSpan(name, parent=parent_span, attributes=attributes)
+        self._spans.append(span)
+        self._active_span = span
+        return span
+
+    @property
+    def spans(self) -> list[InMemoryTraceSpan]:
+        """Get all spans."""
+        return list(self._spans)
+
+    def get_span(self, name: str) -> InMemoryTraceSpan | None:
+        """Get a span by name (returns first match)."""
+        for span in self._spans:
+            if span.name == name:
+                return span
+        return None
+
+    def get_spans_by_name(self, name: str) -> list[InMemoryTraceSpan]:
+        """Get all spans with a given name."""
+        return [span for span in self._spans if span.name == name]
+
+    def get_root_spans(self) -> list[InMemoryTraceSpan]:
+        """Get all root spans (spans without parents)."""
+        return [span for span in self._spans if span.parent is None]
+
+    def reset(self) -> None:
+        """Clear all stored spans."""
+        self._spans.clear()
+        self._active_span = None
 
 
 # =============================================================================

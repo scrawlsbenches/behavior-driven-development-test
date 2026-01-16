@@ -6,9 +6,13 @@ Feature: Observability
   # ===========================================================================
   # FEATURE-LEVEL ESCAPE CLAUSES
   # ===========================================================================
-  # ESCAPE CLAUSE: No distributed tracing implementation.
-  # Current: NullTracingProvider that creates no-op spans.
-  # Requires: OpenTelemetry/Jaeger integration, span context propagation.
+  # RESOLVED: In-memory tracing implemented via InMemoryTracingProvider class.
+  # InMemoryTracingProvider stores spans in memory for testing and debugging.
+  # See features/tracing.feature for detailed tracing specifications.
+  #
+  # ESCAPE CLAUSE: No OpenTelemetry/Jaeger integration.
+  # Current: InMemoryTracingProvider for testing only.
+  # Requires: OpenTelemetry SDK, span exporters, trace context propagation.
   # Depends: None
   #
   # ESCAPE CLAUSE: No Prometheus/StatsD integration.
@@ -255,10 +259,10 @@ Feature: Observability
     When I log "test message" at INFO level
     Then the log should contain the message as structured JSON
 
-  Scenario: Null tracing provider creates null spans
-    Given a null tracing provider
-    When I start a span "test_operation"
-    Then a null span should be returned
+  Scenario: Default tracing provider creates spans
+    Given a default tracing provider
+    When I start a span "test_operation" for observability
+    Then an in-memory span should be returned
 
   # ===========================================================================
   # Distributed Tracing (TODO: Implement)

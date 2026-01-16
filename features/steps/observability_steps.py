@@ -17,7 +17,8 @@ from graph_of_thought.observability import (
     MetricsRegistry,
     InMemoryMetricsCollector,
     StructuredLogger,
-    NullTracingProvider,
+    InMemoryTracingProvider,
+    InMemoryTraceSpan,
 )
 
 use_step_matcher("parse")
@@ -483,17 +484,19 @@ def step_log_contains_structured_json(context):
             assert "message" in entry, "Missing message in log entry"
 
 
-@given("a null tracing provider")
-def step_null_tracing(context):
-    context.tracing = NullTracingProvider()
+@given("a default tracing provider")
+def step_default_tracing(context):
+    context.tracing = InMemoryTracingProvider()
+    context.spans = {}
 
 
-@when('I start a span "{name}"')
-def step_start_span(context, name):
-    context.span = context.tracing.start_span(name)
+@when('I start a span "{name}" for observability')
+def step_start_span_observability(context, name):
+    span = context.tracing.start_span(name)
+    context.span = span
+    context.spans[name] = span
 
 
-@then("a null span should be returned")
-def step_null_span(context):
-    from graph_of_thought.observability import NullTraceSpan
-    assert isinstance(context.span, NullTraceSpan)
+@then("an in-memory span should be returned")
+def step_in_memory_span(context):
+    assert isinstance(context.span, InMemoryTraceSpan)
