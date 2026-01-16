@@ -104,15 +104,118 @@ class ConstantEvaluator(Generic[T]):
         return self._score
 
 
-class NoOpVerifier(Generic[T]):
-    """Verifier that always passes."""
-    
+class InMemoryVerifier(Generic[T]):
+    """
+    Verifier that stores verification history in memory for testing.
+
+    Supports configurable default results, custom validation rules,
+    and full history tracking for test assertions.
+
+    Example:
+        verifier = InMemoryVerifier()
+        verifier.add_rule(lambda content, ctx: (False, "error") if "bad" in content else (True, None))
+        result = await verifier.verify("bad content", context)
+        assert not result.is_valid
+        assert len(verifier.history) == 1
+    """
+
+    def __init__(
+        self,
+        default_valid: bool = True,
+        default_confidence: float = 1.0,
+        default_issues: list[str] | None = None,
+        default_metadata: dict[str, Any] | None = None,
+    ):
+        """
+        Initialize the in-memory verifier.
+
+        Args:
+            default_valid: Default validation result when no rules reject
+            default_confidence: Default confidence score (0.0 to 1.0)
+            default_issues: Default issues to include in results
+            default_metadata: Default metadata to include in results
+        """
+        self._default_valid = default_valid
+        self._default_confidence = default_confidence
+        self._default_issues = list(default_issues) if default_issues else []
+        self._default_metadata = dict(default_metadata) if default_metadata else {}
+        self._rules: list[Callable[[T, SearchContext[T]], tuple[bool, str | None]]] = []
+        self._history: list[dict[str, Any]] = []
+
+    @property
+    def history(self) -> list[dict[str, Any]]:
+        """Get verification history."""
+        return list(self._history)
+
+    def add_rule(
+        self,
+        rule: Callable[[T, SearchContext[T]], tuple[bool, str | None]],
+    ) -> None:
+        """
+        Add a validation rule.
+
+        Args:
+            rule: Function that takes (content, context) and returns
+                  (is_valid, issue_message). If is_valid is False,
+                  the issue_message is added to the result.
+        """
+        self._rules.append(rule)
+
     async def verify(
         self,
         content: T,
         context: SearchContext[T],
     ) -> VerificationResult:
-        return VerificationResult(is_valid=True, confidence=1.0)
+        """
+        Verify content and record in history.
+
+        Evaluates all rules. If any rule returns False, verification fails.
+        All rule issues are collected into the result.
+
+        Args:
+            content: Content to verify
+            context: Search context
+
+        Returns:
+            VerificationResult with validation status and details
+        """
+        issues = list(self._default_issues)
+        is_valid = self._default_valid
+        confidence = self._default_confidence
+
+        # Evaluate all rules
+        for rule in self._rules:
+            rule_valid, issue = rule(content, context)
+            if not rule_valid:
+                is_valid = False
+                confidence = 0.0
+                if issue:
+                    issues.append(issue)
+
+        result = VerificationResult(
+            is_valid=is_valid,
+            confidence=confidence,
+            issues=issues if issues else None,
+            metadata=dict(self._default_metadata) if self._default_metadata else None,
+        )
+
+        # Record in history
+        self._history.append({
+            "content": content,
+            "context": context,
+            "result": result,
+            "timestamp": time.time(),
+        })
+
+        return result
+
+    def reset(self) -> None:
+        """Clear verification history (preserves configuration)."""
+        self._history.clear()
+
+    def clear_rules(self) -> None:
+        """Clear all validation rules."""
+        self._rules.clear()
 
 
 # =============================================================================
