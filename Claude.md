@@ -49,7 +49,7 @@ Graph of Thought is a reasoning framework with two layers:
 ## Running Tests
 
 ```bash
-# Run all behave scenarios
+# Run all implemented scenarios (default - skips @wip)
 behave
 
 # Run specific feature file
@@ -58,6 +58,12 @@ behave features/search.feature
 # Run scenarios by tag
 behave --tags=@core
 behave --tags=@search --tags=~@slow
+
+# Run @wip scenarios (edge cases under development)
+behave --tags=@wip
+
+# Run ALL scenarios including @wip
+behave --tags=""
 
 # Run with verbose output
 behave --verbose
@@ -84,12 +90,85 @@ features/
 ├── search_strategies.feature   # MCTS, etc.
 ├── resource_limits.feature     # Budget enforcement
 ├── visualization.feature       # Graph display
+├── collaborative.feature       # Human-AI collaboration
+├── services.feature            # Service implementations (governance, resources, knowledge)
+├── orchestrator.feature        # Service orchestration and events
+├── llm.feature                 # LLM integration (generators, evaluators, verifiers)
+├── observability.feature       # Logging, metrics, tracing utilities
 └── steps/
     ├── graph_steps.py          # Core graph operations
     ├── config_steps.py         # Configuration steps
     ├── persistence_steps.py    # Storage steps
-    └── metrics_steps.py        # Metrics steps
+    ├── metrics_steps.py        # Metrics steps
+    ├── services_steps.py       # Service implementation steps
+    ├── orchestrator_steps.py   # Orchestrator steps
+    ├── llm_steps.py            # LLM integration steps
+    └── observability_steps.py  # Observability steps
+
+behave.ini                      # Behave configuration (skips @wip by default)
 ```
+
+## Test Coverage Summary
+
+| Category | Feature Files | Implemented | @wip (Edge Cases) |
+|----------|--------------|-------------|-------------------|
+| Core Graph | 8 | 56 | 0 |
+| Services | 4 | 80 | 64 |
+| **Total** | **18** | **135** | **64** |
+
+## Escape Clauses and Development Workflow
+
+Feature files document both implemented behavior AND known limitations via **escape clauses**. This enables development-driven planning.
+
+### Escape Clause Format
+
+```gherkin
+# ===========================================================================
+# Simple Resource Service
+# ===========================================================================
+# ESCAPE CLAUSE: Budgets reset on restart.
+# Current: All budget state is in-memory.
+# Requires: Database persistence (PostgreSQL/Redis) for budget state.
+# Depends: None
+
+Scenario: Simple resource service tracks budgets
+  ...implemented scenarios...
+
+# --- Resource Edge Cases (TODO: Implement) ---
+
+# ESCAPE CLAUSE: Date filtering not implemented in consumption reports.
+# Current: Returns all consumption events regardless of date.
+# Requires: Parse timestamps, filter by start_date/end_date parameters.
+# Depends: None
+@wip
+Scenario: Resource service filters consumption report by date range
+  ...desired behavior when implemented...
+```
+
+### Format Fields
+
+| Field | Purpose |
+|-------|---------|
+| **ESCAPE CLAUSE** | What's simplified or missing |
+| **Current** | How it behaves now |
+| **Requires** | What's needed to implement properly |
+| **Depends** | Other escape clauses that must be resolved first |
+
+### Development Workflow
+
+1. **Pick a @wip scenario** to implement
+2. **Read the escape clause** to understand scope and dependencies
+3. **Check "Depends"** for prerequisites
+4. **Implement** until the scenario passes
+5. **Remove the @wip tag** when complete
+
+### Escape Clause Locations
+
+- **Feature-level**: Architectural limitations affecting the whole module
+- **Section-level**: Specific functionality that's stubbed
+- **Scenario-level**: Edge cases marked with @wip
+
+Escape clauses remain in Python source files for implementation reference, while feature files serve as the development specification.
 
 ## Behave Fundamentals
 
@@ -204,6 +283,14 @@ Use domain terms consistently across code, tests, and documentation:
 | Chunk | A 2-4 hour unit of collaborative work |
 | Discovery | Knowledge gained during implementation |
 | Artifact | A produced file or output |
+| Orchestrator | Coordinates services and handles cross-cutting events |
+| Governance | Approval workflows, policies, and audit trails |
+| Resource Service | Budget management and consumption tracking |
+| Knowledge Service | Storage and retrieval of decisions, patterns, learnings |
+| Question Service | Human-in-the-loop question routing and tracking |
+| Communication Service | Session handoffs and context compression |
+| Escape Clause | Documented limitation with implementation guidance |
+| @wip | Work-in-progress scenario (skipped by default) |
 
 ### Write Tests Before Implementation
 
@@ -349,8 +436,10 @@ Scenario: Blocking question workflow
 Scenario: Full project lifecycle
   ...
 
+# @wip = Work in progress (skipped by default via behave.ini)
+# Used for edge cases documented by escape clauses
 @wip
-Scenario: Work in progress
+Scenario: Resource service filters consumption report by date range
   ...
 ```
 
@@ -359,6 +448,12 @@ Run filtered:
 behave --tags=@core
 behave --tags=@search --tags=~@slow
 behave --tags="@core and not @wip"
+
+# Run @wip scenarios to see what needs implementation
+behave --tags=@wip
+
+# Run everything including @wip
+behave --tags=""
 ```
 
 ## Anti-Patterns to Avoid
@@ -385,6 +480,9 @@ When adding a new feature:
 - [ ] Appropriate tags are applied
 - [ ] Async operations use `asyncio.run()`
 - [ ] Data tables have explicit headers
+- [ ] Escape clauses document known limitations
+- [ ] Edge cases are captured as @wip scenarios
+- [ ] Dependencies between escape clauses are noted
 
 ## Resources
 
