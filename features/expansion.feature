@@ -1,3 +1,4 @@
+@core @graph @expansion
 Feature: Thought Expansion
   As a developer using Graph of Thought
   I want to expand thoughts to generate children

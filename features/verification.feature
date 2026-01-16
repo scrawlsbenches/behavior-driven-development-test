@@ -1,3 +1,4 @@
+@services @verification
 Feature: In-Memory Verification Provider
   As a developer testing Graph of Thought
   I want an in-memory verification provider

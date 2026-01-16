@@ -1,3 +1,4 @@
+@observability @metrics
 Feature: Metrics Collection
   As a developer using Graph of Thought
   I want to collect metrics about graph operations

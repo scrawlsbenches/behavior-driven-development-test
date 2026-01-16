@@ -1,3 +1,4 @@
+@observability @tracing @testing
 Feature: In-Memory Tracing Provider
   As a developer testing Graph of Thought
   I want an in-memory tracing provider

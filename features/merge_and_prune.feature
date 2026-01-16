@@ -1,3 +1,4 @@
+@core @graph @optimization
 Feature: Merge and Prune Operations
   As a developer using Graph of Thought
   I want to merge and prune thoughts

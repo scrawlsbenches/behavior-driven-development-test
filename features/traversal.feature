@@ -1,3 +1,4 @@
+@core @graph @traversal
 Feature: Graph Traversal
   As a developer using Graph of Thought
   I want to traverse the graph in different orders
