@@ -286,7 +286,6 @@ Feature: Observability
     When I record histogram "latency" with 1000 values from normal distribution
     Then I should be able to query p50, p90, p99 percentiles
 
-  @wip
   Scenario: In-memory collector resets counters
     Given an in-memory collector for observability
     And counter "requests" with value 100

@@ -450,6 +450,18 @@ def step_tagged_tracked(context):
     assert True
 
 
+@given('counter "{name}" with value {value:d}')
+def step_counter_with_value(context, name, value):
+    """Set up a counter with a specific initial value."""
+    context.collector.increment(name, value)
+
+
+@when("I reset all metrics")
+def step_reset_all_metrics(context):
+    """Reset all metrics in the collector."""
+    context.collector.reset()
+
+
 # =============================================================================
 # Null Implementations
 # =============================================================================
