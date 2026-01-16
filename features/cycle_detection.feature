@@ -1,3 +1,4 @@
+@core @graph @validation
 Feature: Cycle Detection
   As a developer using Graph of Thought
   I want the graph to detect and prevent cycles by default

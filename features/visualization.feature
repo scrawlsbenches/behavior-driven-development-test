@@ -1,3 +1,4 @@
+@core @visualization
 Feature: Visualization
   As a developer using Graph of Thought
   I want to visualize the graph

@@ -1,3 +1,4 @@
+@observability @metrics @testing
 Feature: In-Memory Metrics Collector
   As a developer testing Graph of Thought
   I want an in-memory metrics collector

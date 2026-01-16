@@ -1,3 +1,4 @@
+@services @orchestrator
 Feature: Service Orchestrator
   As a developer using Graph of Thought
   I want to use the orchestrator to coordinate services

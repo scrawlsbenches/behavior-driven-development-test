@@ -1,3 +1,4 @@
+@core @persistence @storage
 Feature: Persistence
   As a developer using Graph of Thought
   I want to persist graphs to storage

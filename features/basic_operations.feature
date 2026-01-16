@@ -1,3 +1,4 @@
+@core @graph
 Feature: Basic Graph Operations
   As a developer using Graph of Thought
   I want to perform basic graph operations

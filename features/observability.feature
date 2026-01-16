@@ -1,3 +1,4 @@
+@observability @logging @metrics
 Feature: Observability
   As a developer using Graph of Thought
   I want to use observability utilities for logging and metrics
