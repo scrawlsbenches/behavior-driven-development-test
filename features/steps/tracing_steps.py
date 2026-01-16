@@ -58,6 +58,13 @@ def step_start_child_span(context, child, parent):
     context.current_span = span
 
 
+@when('I start and end a span "{name}"')
+def step_start_and_end_span(context, name):
+    """Start a span and immediately end it (simulates proper scoping)."""
+    with context.tracing.start_span(name) as span:
+        context.spans[name] = span
+
+
 @when('I end the span "{name}"')
 def step_end_span(context, name):
     span = context.spans.get(name)

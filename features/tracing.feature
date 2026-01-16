@@ -156,12 +156,13 @@ Feature: In-Memory Tracing Provider
   # Provider Queries
   # ===========================================================================
 
-  Scenario: Getting all root spans
+  Scenario: Getting all root spans with proper scoping
     Given an in-memory tracing provider
-    When I start a span "root_1"
-    And I start a span "root_2"
-    And I start a child span "child_of_1" under "root_1"
+    When I start and end a span "root_1"
+    And I start and end a span "root_2"
+    And I start a child span "child_of_root_1" under "root_1"
     Then the provider should have 2 root spans
+    And the span "child_of_root_1" should have parent "root_1"
 
   Scenario: Getting spans by name
     Given an in-memory tracing provider
@@ -209,12 +210,18 @@ Feature: In-Memory Tracing Provider
     Then the provider should have 0 spans
     And the provider should have 0 root spans
 
-  @wip
   Scenario: Automatic span propagation
     Given an in-memory tracing provider
     When I start a span "auto_parent"
     And I start a span "auto_child" without explicit parent
     Then the span "auto_child" should have parent "auto_parent"
+
+  Scenario: Context manager restores parent as active
+    Given an in-memory tracing provider
+    When I use span "parent" as a context manager
+    And I start a span "sibling"
+    Then the span "sibling" should have no parent
+    And the provider should have 2 root spans
 
   @wip
   Scenario: Exporting spans in OpenTelemetry format

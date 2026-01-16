@@ -337,6 +337,8 @@ class InMemoryTraceSpan:
 
     Captures all span operations for verification in tests.
     Supports context manager protocol for automatic end() calls.
+    When used as a context manager, properly restores the parent span
+    as active when exiting (like OpenTelemetry).
     """
 
     def __init__(
@@ -344,6 +346,7 @@ class InMemoryTraceSpan:
         name: str,
         parent: InMemoryTraceSpan | None = None,
         attributes: dict[str, Any] | None = None,
+        provider: Any | None = None,
     ):
         self._name = name
         self._parent = parent
@@ -354,6 +357,7 @@ class InMemoryTraceSpan:
         self._start_time = time.time()
         self._end_time: float | None = None
         self._children: list[InMemoryTraceSpan] = []
+        self._provider = provider  # Reference to provider for context restoration
 
         if parent:
             parent._children.append(self)
@@ -434,6 +438,9 @@ class InMemoryTraceSpan:
         if exc_type is not None:
             self.set_status("ERROR", str(exc_val) if exc_val else None)
         self.end()
+        # Restore parent as active span (OpenTelemetry-like behavior)
+        if self._provider is not None:
+            self._provider._active_span = self._parent
 
     def to_dict(self) -> dict[str, Any]:
         """Convert span to dictionary for inspection."""
@@ -476,10 +483,21 @@ class InMemoryTracingProvider:
     ) -> InMemoryTraceSpan:
         """Start a new trace span.
 
-        Note: Unlike OpenTelemetry, this does not automatically inherit
-        from _active_span. Use explicit parent_span for child spans.
+        Automatically inherits from the active span if no explicit parent
+        is provided (OpenTelemetry-like behavior). When used as a context
+        manager, the span properly restores the parent as active on exit.
+
+        Args:
+            name: Span name
+            parent_span: Explicit parent span (overrides automatic propagation)
+            attributes: Initial span attributes
+
+        Returns:
+            The new span, which is now the active span
         """
-        span = InMemoryTraceSpan(name, parent=parent_span, attributes=attributes)
+        # Use explicit parent if provided, otherwise inherit from active span
+        parent = parent_span if parent_span is not None else self._active_span
+        span = InMemoryTraceSpan(name, parent=parent, attributes=attributes, provider=self)
         self._spans.append(span)
         self._active_span = span
         return span
