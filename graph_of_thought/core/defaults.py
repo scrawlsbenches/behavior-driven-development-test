@@ -119,42 +119,6 @@ class NoOpVerifier(Generic[T]):
 # Default Observability Implementations
 # =============================================================================
 
-class NullMetricsCollector:
-    """Metrics collector that discards all metrics."""
-    
-    def increment(
-        self,
-        metric: str,
-        value: int = 1,
-        tags: dict[str, str] | None = None,
-    ) -> None:
-        pass
-    
-    def gauge(
-        self,
-        metric: str,
-        value: float,
-        tags: dict[str, str] | None = None,
-    ) -> None:
-        pass
-    
-    def histogram(
-        self,
-        metric: str,
-        value: float,
-        tags: dict[str, str] | None = None,
-    ) -> None:
-        pass
-    
-    def timing(
-        self,
-        metric: str,
-        value_ms: float,
-        tags: dict[str, str] | None = None,
-    ) -> None:
-        pass
-
-
 class InMemoryMetricsCollector:
     """
     Metrics collector that stores metrics in memory.

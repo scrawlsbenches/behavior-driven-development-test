@@ -15,7 +15,6 @@ from graph_of_thought.observability import (
     timed,
     counted,
     MetricsRegistry,
-    NullMetricsCollector,
     InMemoryMetricsCollector,
     StructuredLogger,
     NullTracingProvider,
@@ -448,9 +447,9 @@ def step_counter_with_value(context, name, value):
 # Null Implementations
 # =============================================================================
 
-@given("a null metrics collector")
-def step_null_metrics(context):
-    context.collector = NullMetricsCollector()
+@given("a default metrics collector")
+def step_default_metrics(context):
+    context.collector = InMemoryMetricsCollector()
 
 
 @then("no error should occur")

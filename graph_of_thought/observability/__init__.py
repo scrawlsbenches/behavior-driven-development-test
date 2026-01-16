@@ -13,7 +13,6 @@ from contextlib import contextmanager
 from functools import wraps
 
 from ..core.defaults import (
-    NullMetricsCollector,
     InMemoryMetricsCollector,
     StandardLogger,
     StructuredLogger,
@@ -24,7 +23,6 @@ from ..core.defaults import (
 
 # Re-export defaults
 __all__ = [
-    "NullMetricsCollector",
     "InMemoryMetricsCollector",
     "StandardLogger",
     "StructuredLogger",

@@ -241,14 +241,14 @@ Feature: Observability
     Then both collectors should have the metric
 
   # ===========================================================================
-  # Null Implementations
+  # Default Implementations
   # Note: InMemoryMetricsCollector is now in features/metrics_collector.feature
   # ===========================================================================
 
-  Scenario: Null metrics collector accepts but discards metrics
-    Given a null metrics collector
+  Scenario: Default metrics collector stores metrics
+    Given a default metrics collector
     When I increment "anything" by 100
-    Then no error should occur
+    Then the counter "anything" should equal 100
 
   Scenario: Logger outputs structured JSON format
     Given a logger configured for testing

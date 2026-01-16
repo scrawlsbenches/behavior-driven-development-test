@@ -38,7 +38,7 @@ from .core.defaults import (
     FunctionGenerator,
     FunctionEvaluator,
     ConstantEvaluator,
-    NullMetricsCollector,
+    InMemoryMetricsCollector,
     StructuredLogger,
     NullTracingProvider,
     SimpleResourceLimiter,
@@ -155,7 +155,7 @@ class GraphOfThought(Generic[T]):
         
         # Pluggable components (use null implementations if not provided)
         self._persistence = persistence
-        self._metrics = metrics or NullMetricsCollector()
+        self._metrics = metrics or InMemoryMetricsCollector()
         self._logger = logger or StructuredLogger("graph_of_thought")
         self._tracer = tracer or NullTracingProvider()
         self._resource_limiter = resource_limiter or SimpleResourceLimiter()
