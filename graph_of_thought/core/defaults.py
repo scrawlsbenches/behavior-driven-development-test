@@ -521,10 +521,10 @@ class SimpleEventEmitter(Generic[T]):
 
 
 class LoggingEventHandler(Generic[T]):
-    """Event handler that logs all events."""
-    
+    """Event handler that logs all graph events as structured JSON."""
+
     def __init__(self, logger: Logger | None = None):
-        self._logger = logger or StandardLogger("graph_events")
+        self._logger = logger or StructuredLogger("graph_events")
     
     async def handle(self, event: GraphEvent[T]) -> None:
         thought_id = event.thought.id if event.thought else None
