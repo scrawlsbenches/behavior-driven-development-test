@@ -1,4 +1,4 @@
-@observability @metrics @testing
+@observability @metrics @testing @high
 Feature: In-Memory Metrics Collector
   As a developer testing Graph of Thought
   I want an in-memory metrics collector
@@ -35,19 +35,17 @@ Feature: In-Memory Metrics Collector
     And I increment counter "requests" by 3
     Then the counter "requests" should equal 8
 
-  Scenario: Counter with tags creates separate metrics
+  Scenario Outline: Counter with <tag_type> tags creates separate metrics
     Given an in-memory metrics collector
-    When I increment counter "requests" by 1 with tags endpoint="users"
-    And I increment counter "requests" by 2 with tags endpoint="orders"
-    Then the counter "requests" with tags endpoint="users" should equal 1
-    And the counter "requests" with tags endpoint="orders" should equal 2
+    When I increment counter "requests" by <value1> with tags <tags1>
+    And I increment counter "requests" by <value2> with tags <tags2>
+    Then the counter "requests" with tags <tags1> should equal <value1>
+    And the counter "requests" with tags <tags2> should equal <value2>
 
-  Scenario: Counter with multiple tags
-    Given an in-memory metrics collector
-    When I increment counter "requests" by 1 with tags endpoint="users", method="GET"
-    And I increment counter "requests" by 3 with tags endpoint="users", method="POST"
-    Then the counter "requests" with tags endpoint="users", method="GET" should equal 1
-    And the counter "requests" with tags endpoint="users", method="POST" should equal 3
+  Examples:
+    | tag_type | value1 | value2 | tags1                           | tags2                            |
+    | single   | 1      | 2      | endpoint="users"                | endpoint="orders"                |
+    | multiple | 1      | 3      | endpoint="users", method="GET"  | endpoint="users", method="POST"  |
 
   # ===========================================================================
   # Gauge Operations
@@ -121,20 +119,20 @@ Feature: In-Memory Metrics Collector
     And the timing "api_call" with tags service="data" should contain value 200.0
 
   # ===========================================================================
-  # Query Operations (for test assertions)
+  # Query Operations (Scenario Outline)
   # ===========================================================================
+  # Consolidated scenarios for listing metric names.
 
-  Scenario: List all counter names
+  Scenario Outline: List all <metric_type> names
     Given an in-memory metrics collector
-    When I increment counter "requests" by 1
-    And I increment counter "errors" by 1
-    Then the collector should have counters ["errors", "requests"]
+    When I <setup_operation1>
+    And I <setup_operation2>
+    Then the collector should have <metric_type>s <expected_list>
 
-  Scenario: List all gauge names
-    Given an in-memory metrics collector
-    When I set gauge "memory" to 1024
-    And I set gauge "cpu" to 50
-    Then the collector should have gauges ["cpu", "memory"]
+  Examples:
+    | metric_type | setup_operation1               | setup_operation2              | expected_list          |
+    | counter     | increment counter "requests" by 1 | increment counter "errors" by 1 | ["errors", "requests"] |
+    | gauge       | set gauge "memory" to 1024     | set gauge "cpu" to 50         | ["cpu", "memory"]      |
 
   Scenario: Check if metric exists
     Given an in-memory metrics collector

@@ -1,4 +1,4 @@
-@services @collaborative
+@services @collaborative @high
 Feature: Collaborative Project
   As a developer using Graph of Thought
   I want to manage human-AI collaborative projects

@@ -1,4 +1,4 @@
-@core @search
+@core @search @critical
 Feature: Search Algorithms
   As a developer using Graph of Thought
   I want to search through the reasoning graph

@@ -1,4 +1,4 @@
-@services
+@services @high
 Feature: Service Implementations
   As a developer using Graph of Thought
   I want to use service implementations for governance, resources, and knowledge

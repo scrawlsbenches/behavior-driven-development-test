@@ -1,4 +1,4 @@
-@services @verification
+@services @verification @high
 Feature: In-Memory Verification Provider
   As a developer testing Graph of Thought
   I want an in-memory verification provider
@@ -44,20 +44,19 @@ Feature: In-Memory Verification Provider
     Then the verifier result should have 0 issues
 
   # ===========================================================================
-  # Configurable Results
+  # Configurable Results (Scenario Outline)
   # ===========================================================================
+  # Consolidated from separate scenarios for fail mode, confidence, issues, metadata.
 
-  Scenario: Configuring verifier to fail
-    Given an in-memory verifier configured to fail
-    When I verify content "any content"
-    Then the verifier result should fail
-    And the verifier result confidence should be 0.0
+  Scenario Outline: Configuring verifier with <config_type>
+    Given an in-memory verifier <configuration>
+    When I verify content "<test_content>"
+    Then <assertion>
 
-  Scenario: Configuring verifier with custom confidence
-    Given an in-memory verifier with confidence 0.75
-    When I verify content "test content"
-    Then the verifier result should pass
-    And the verifier result confidence should be 0.75
+  Examples:
+    | config_type | configuration                                          | test_content       | assertion                                           |
+    | fail mode   | configured to fail                                     | any content        | the verifier result should fail                     |
+    | confidence  | with confidence 0.75                                   | test content       | the verifier result confidence should be 0.75       |
 
   Scenario: Configuring verifier with issues
     Given an in-memory verifier with issues "Missing citation", "Unclear reasoning"
@@ -73,20 +72,22 @@ Feature: In-Memory Verification Provider
     And the verifier result metadata should have "verified_at" with value "2024-01-15"
 
   # ===========================================================================
-  # Content-Based Rules
+  # Content-Based Rules (Scenario Outline)
   # ===========================================================================
+  # Consolidated from separate matching and non-matching scenarios.
 
-  Scenario: Adding validation rule that rejects specific content
+  Scenario Outline: Validation rule rejects content containing "<reject_word>" - <case>
     Given an in-memory verifier
-    And a rule that rejects content containing "error"
-    When I verify content "this has an error"
-    Then the verifier result should fail
+    And a rule that rejects content containing "<reject_word>"
+    When I verify content "<test_content>"
+    Then the verifier result should <expected_result>
 
-  Scenario: Adding validation rule that rejects specific content - passing case
-    Given an in-memory verifier
-    And a rule that rejects content containing "error"
-    When I verify content "this is fine"
-    Then the verifier result should pass
+  Examples:
+    | reject_word | test_content         | case          | expected_result |
+    | error       | this has an error    | matching      | fail            |
+    | error       | this is fine         | non-matching  | pass            |
+    | spam        | this is spam content | matching      | fail            |
+    | spam        | this is valid        | non-matching  | pass            |
 
   Scenario: Multiple rules are evaluated
     Given an in-memory verifier

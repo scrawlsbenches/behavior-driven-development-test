@@ -1,4 +1,4 @@
-@core @persistence @serialization
+@core @persistence @serialization @high
 Feature: Serialization
   As a developer using Graph of Thought
   I want to serialize and deserialize graphs

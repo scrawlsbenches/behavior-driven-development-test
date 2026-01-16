@@ -1,4 +1,4 @@
-@core @resources @validation
+@core @resources @validation @low
 Feature: Resource Limits
   As a developer using Graph of Thought
   I want the graph to enforce resource limits
