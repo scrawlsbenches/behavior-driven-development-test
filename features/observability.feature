@@ -21,10 +21,9 @@ Feature: Observability
   # Requires: Integration with metrics collectors, configurable log levels.
   # Depends: Metrics registry integration
   #
-  # ESCAPE CLAUSE: log_context is a placeholder.
-  # Current: Context manager yields without adding context.
-  # Requires: structlog or similar for structured context propagation.
-  # Depends: None
+  # RESOLVED: Structured logging implemented via StructuredLogger class.
+  # StructuredLogger outputs JSON with context binding support.
+  # Use StructuredLogger(output=StringIO()) for testing, or output to stderr in production.
   #
   # ESCAPE CLAUSE: InMemoryMetricsCollector doesn't persist.
   # Current: All metrics lost on restart.
@@ -48,9 +47,8 @@ Feature: Observability
     When I set up logging with name "my_app"
     Then the logger should have name "my_app"
 
-  # --- Logging Edge Cases (TODO: Implement) ---
+  # --- Logging Edge Cases ---
 
-  @wip
   Scenario: Logging with structured context
     Given structured logging is enabled
     When I log "Processing request" with context request_id "123" and user "alice"

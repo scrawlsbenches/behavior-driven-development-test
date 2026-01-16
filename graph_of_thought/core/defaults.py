@@ -10,6 +10,10 @@ from typing import TypeVar, Generic, Any, Callable, Awaitable
 import asyncio
 import time
 import logging
+import json
+import sys
+from datetime import datetime, timezone
+from io import StringIO
 
 from ..core import (
     Thought,
@@ -252,21 +256,134 @@ class StandardLogger:
 
 class NullLogger:
     """Logger that discards all log messages."""
-    
+
     def debug(self, message: str, **kwargs: Any) -> None:
         pass
-    
+
     def info(self, message: str, **kwargs: Any) -> None:
         pass
-    
+
     def warning(self, message: str, **kwargs: Any) -> None:
         pass
-    
+
     def error(self, message: str, **kwargs: Any) -> None:
         pass
-    
+
     def bind(self, **kwargs: Any) -> NullLogger:
         return self
+
+
+class StructuredLogger:
+    """
+    Logger that outputs structured JSON log entries.
+
+    Supports context binding for adding persistent context to all log messages.
+    Each log entry is a JSON object with timestamp, level, message, and context.
+
+    Example output:
+        {"timestamp": "2024-01-15T10:30:00Z", "level": "INFO", "message": "Processing", "request_id": "123"}
+    """
+
+    def __init__(
+        self,
+        name: str = "graph_of_thought",
+        output: Any | None = None,
+        level: int = logging.DEBUG,
+    ):
+        """
+        Initialize structured logger.
+
+        Args:
+            name: Logger name included in log entries
+            output: Output stream (defaults to sys.stderr). Can be StringIO for testing.
+            level: Minimum log level to output
+        """
+        self._name = name
+        self._output = output if output is not None else sys.stderr
+        self._level = level
+        self._context: dict[str, Any] = {}
+
+    def _format_value(self, value: Any) -> Any:
+        """Format a value for JSON serialization."""
+        if isinstance(value, (str, int, float, bool, type(None))):
+            return value
+        if isinstance(value, (list, tuple)):
+            return [self._format_value(v) for v in value]
+        if isinstance(value, dict):
+            return {k: self._format_value(v) for k, v in value.items()}
+        return str(value)
+
+    def _log(self, level: int, level_name: str, message: str, extra: dict[str, Any]) -> None:
+        """Write a structured log entry."""
+        if level < self._level:
+            return
+
+        entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "level": level_name,
+            "logger": self._name,
+            "message": message,
+        }
+
+        # Merge bound context and extra kwargs
+        combined_context = {**self._context, **extra}
+        for key, value in combined_context.items():
+            entry[key] = self._format_value(value)
+
+        json_line = json.dumps(entry)
+        self._output.write(json_line + "\n")
+
+        # Flush if possible to ensure immediate output
+        if hasattr(self._output, 'flush'):
+            self._output.flush()
+
+    def debug(self, message: str, **kwargs: Any) -> None:
+        """Log a debug message."""
+        self._log(logging.DEBUG, "DEBUG", message, kwargs)
+
+    def info(self, message: str, **kwargs: Any) -> None:
+        """Log an info message."""
+        self._log(logging.INFO, "INFO", message, kwargs)
+
+    def warning(self, message: str, **kwargs: Any) -> None:
+        """Log a warning message."""
+        self._log(logging.WARNING, "WARNING", message, kwargs)
+
+    def error(self, message: str, **kwargs: Any) -> None:
+        """Log an error message."""
+        self._log(logging.ERROR, "ERROR", message, kwargs)
+
+    def bind(self, **kwargs: Any) -> StructuredLogger:
+        """
+        Return a new logger with additional bound context.
+
+        The bound context will be included in all subsequent log messages
+        from the returned logger.
+
+        Example:
+            logger = StructuredLogger()
+            request_logger = logger.bind(request_id="123", user="alice")
+            request_logger.info("Processing")  # Includes request_id and user
+        """
+        new_logger = StructuredLogger(
+            name=self._name,
+            output=self._output,
+            level=self._level,
+        )
+        new_logger._context = {**self._context, **kwargs}
+        return new_logger
+
+    def get_output(self) -> str:
+        """
+        Get captured output if using StringIO.
+
+        Returns:
+            The captured log output as a string.
+
+        Raises:
+            AttributeError: If output stream doesn't support getvalue().
+        """
+        return self._output.getvalue()
 
 
 class NullTraceSpan:

@@ -17,6 +17,7 @@ from ..core.defaults import (
     InMemoryMetricsCollector,
     StandardLogger,
     NullLogger,
+    StructuredLogger,
     NullTracingProvider,
     NullTraceSpan,
 )
@@ -28,11 +29,13 @@ __all__ = [
     "InMemoryMetricsCollector",
     "StandardLogger",
     "NullLogger",
+    "StructuredLogger",
     "NullTracingProvider",
     "NullTraceSpan",
     "setup_logging",
     "timed",
     "counted",
+    "log_context",
 ]
 
 

@@ -6,6 +6,8 @@ This file focuses on logging, decorators, and metrics registry functionality.
 """
 import logging
 import asyncio
+import json
+from io import StringIO
 from behave import given, when, then, use_step_matcher
 
 from graph_of_thought.observability import (
@@ -16,6 +18,7 @@ from graph_of_thought.observability import (
     NullMetricsCollector,
     InMemoryMetricsCollector,
     NullLogger,
+    StructuredLogger,
     NullTracingProvider,
 )
 
@@ -65,6 +68,43 @@ def step_logger_custom_format(context):
 @then('the logger should have name "{name}"')
 def step_logger_name(context, name):
     assert context.logger.name == name
+
+
+# =============================================================================
+# Structured Logging
+# =============================================================================
+
+@given("structured logging is enabled")
+def step_structured_logging_enabled(context):
+    """Set up a structured logger with captured output for testing."""
+    context.log_output = StringIO()
+    context.structured_logger = StructuredLogger(
+        name="test_structured",
+        output=context.log_output,
+    )
+
+
+@when('I log "{message}" with context request_id "{request_id}" and user "{user}"')
+def step_log_with_context(context, message, request_id, user):
+    """Log a message with structured context."""
+    context.structured_logger.info(message, request_id=request_id, user=user)
+
+
+@then('the log output should include "{key}": "{value}"')
+def step_log_output_includes(context, key, value):
+    """Verify that the log output contains the expected key-value pair."""
+    log_content = context.log_output.getvalue()
+
+    # Parse the JSON log line(s) and check for the key-value pair
+    found = False
+    for line in log_content.strip().split('\n'):
+        if line:
+            entry = json.loads(line)
+            if key in entry and str(entry[key]) == value:
+                found = True
+                break
+
+    assert found, f'Expected "{key}": "{value}" in log output, got: {log_content}'
 
 
 # =============================================================================
