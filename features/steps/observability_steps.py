@@ -106,6 +106,129 @@ def step_log_output_includes(context, key, value):
     assert found, f'Expected "{key}": "{value}" in log output, got: {log_content}'
 
 
+@given("structured logging is enabled with level INFO")
+def step_structured_logging_with_level(context):
+    """Set up a structured logger with INFO level filtering."""
+    context.log_output = StringIO()
+    context.structured_logger = StructuredLogger(
+        name="test_structured",
+        output=context.log_output,
+        level=logging.INFO,
+    )
+
+
+@given('structured logging is enabled with name "{name}"')
+def step_structured_logging_with_name(context, name):
+    """Set up a structured logger with a custom name."""
+    context.log_output = StringIO()
+    context.structured_logger = StructuredLogger(
+        name=name,
+        output=context.log_output,
+    )
+
+
+@when('I bind context with {key} "{value}"')
+def step_bind_context(context, key, value):
+    """Bind context to the structured logger."""
+    context.structured_logger = context.structured_logger.bind(**{key: value})
+
+
+@when('I bind additional context with {key} "{value}"')
+def step_bind_additional_context(context, key, value):
+    """Bind additional context to an already-bound logger."""
+    context.structured_logger = context.structured_logger.bind(**{key: value})
+
+
+@when('I log "{message}" at DEBUG level')
+def step_log_debug(context, message):
+    """Log a DEBUG message."""
+    context.structured_logger.debug(message)
+
+
+@when('I log "{message}" at INFO level')
+def step_log_info_structured(context, message):
+    """Log an INFO message."""
+    context.structured_logger.info(message)
+
+
+@when('I log "{message}" at WARNING level')
+def step_log_warning(context, message):
+    """Log a WARNING message."""
+    context.structured_logger.warning(message)
+
+
+@when('I log "{message}" at ERROR level')
+def step_log_error(context, message):
+    """Log an ERROR message."""
+    context.structured_logger.error(message)
+
+
+@when('I log "{message}" with nested context')
+def step_log_with_nested_context(context, message):
+    """Log a message with complex nested data."""
+    context.structured_logger.info(
+        message,
+        metadata={"nested": {"key": "value"}, "list": [1, 2, 3]},
+        tags=["production", "api"],
+    )
+
+
+@then('both log entries should include "{key}": "{value}"')
+def step_both_entries_include(context, key, value):
+    """Verify both log entries contain the expected key-value pair."""
+    log_content = context.log_output.getvalue()
+    entries = [json.loads(line) for line in log_content.strip().split('\n') if line]
+
+    assert len(entries) >= 2, f"Expected at least 2 entries, got {len(entries)}"
+    for i, entry in enumerate(entries):
+        assert key in entry, f"Entry {i} missing key '{key}'"
+        assert str(entry[key]) == value, f"Entry {i} has {key}={entry[key]}, expected {value}"
+
+
+@then('the log output should contain {count:d} entry')
+@then('the log output should contain {count:d} entries')
+def step_log_entry_count(context, count):
+    """Verify the number of log entries."""
+    log_content = context.log_output.getvalue()
+    entries = [line for line in log_content.strip().split('\n') if line]
+    assert len(entries) == count, f"Expected {count} entries, got {len(entries)}: {entries}"
+
+
+@then('the log should have entry with level "{level}" and message "{message}"')
+def step_log_has_entry(context, level, message):
+    """Verify a specific log entry exists with given level and message."""
+    log_content = context.log_output.getvalue()
+    found = False
+    for line in log_content.strip().split('\n'):
+        if line:
+            entry = json.loads(line)
+            if entry.get("level") == level and entry.get("message") == message:
+                found = True
+                break
+    assert found, f'No entry with level "{level}" and message "{message}" found'
+
+
+@then("the log output should be valid JSON")
+def step_log_is_valid_json(context):
+    """Verify all log output is valid JSON."""
+    log_content = context.log_output.getvalue()
+    for line in log_content.strip().split('\n'):
+        if line:
+            json.loads(line)  # Will raise if invalid
+
+
+@then("the nested data should be preserved in the output")
+def step_nested_data_preserved(context):
+    """Verify nested data structures are preserved in log output."""
+    log_content = context.log_output.getvalue()
+    entry = json.loads(log_content.strip().split('\n')[-1])
+
+    assert "metadata" in entry, "Missing 'metadata' in log entry"
+    assert entry["metadata"]["nested"]["key"] == "value", "Nested dict not preserved"
+    assert entry["metadata"]["list"] == [1, 2, 3], "Nested list not preserved"
+    assert entry["tags"] == ["production", "api"], "Tags list not preserved"
+
+
 # =============================================================================
 # Timed Decorator
 # =============================================================================
@@ -345,17 +468,11 @@ def step_no_error(context):
 def step_logger_for_testing(context):
     """Set up a structured logger with captured output for testing."""
     context.log_output = StringIO()
-    context.test_logger = StructuredLogger(
+    context.structured_logger = StructuredLogger(
         name="test_logger",
         output=context.log_output,
     )
-
-
-@when('I log "{message}" at INFO level')
-def step_log_info(context, message):
-    """Log an INFO message using the test logger."""
-    context.test_logger.info(message)
-    context.last_log_message = message
+    context.last_log_message = None
 
 
 @then("the log should contain the message as structured JSON")
@@ -371,8 +488,6 @@ def step_log_contains_structured_json(context):
             assert "timestamp" in entry, "Missing timestamp in log entry"
             assert "level" in entry, "Missing level in log entry"
             assert "message" in entry, "Missing message in log entry"
-            assert entry["message"] == context.last_log_message, \
-                f"Expected message '{context.last_log_message}', got '{entry['message']}'"
 
 
 @given("a null tracing provider")

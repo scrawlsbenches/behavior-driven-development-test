@@ -55,6 +55,51 @@ Feature: Observability
     Then the log output should include "request_id": "123"
     And the log output should include "user": "alice"
 
+  Scenario: Bound context persists across multiple log calls
+    Given structured logging is enabled
+    When I bind context with request_id "REQ-456"
+    And I log "First message" at INFO level
+    And I log "Second message" at INFO level
+    Then both log entries should include "request_id": "REQ-456"
+
+  Scenario: Log level filtering respects minimum level
+    Given structured logging is enabled with level INFO
+    When I log "Debug message" at DEBUG level
+    And I log "Info message" at INFO level
+    Then the log output should contain 1 entry
+    And the log output should include "message": "Info message"
+
+  Scenario: Chained context binding accumulates context
+    Given structured logging is enabled
+    When I bind context with service "api"
+    And I bind additional context with request_id "789"
+    And I log "Chained context" at INFO level
+    Then the log output should include "service": "api"
+    And the log output should include "request_id": "789"
+
+  Scenario: All log levels produce correct output
+    Given structured logging is enabled
+    When I log "Debug msg" at DEBUG level
+    And I log "Info msg" at INFO level
+    And I log "Warning msg" at WARNING level
+    And I log "Error msg" at ERROR level
+    Then the log output should contain 4 entries
+    And the log should have entry with level "DEBUG" and message "Debug msg"
+    And the log should have entry with level "INFO" and message "Info msg"
+    And the log should have entry with level "WARNING" and message "Warning msg"
+    And the log should have entry with level "ERROR" and message "Error msg"
+
+  Scenario: Complex data types are serialized correctly
+    Given structured logging is enabled
+    When I log "Complex data" with nested context
+    Then the log output should be valid JSON
+    And the nested data should be preserved in the output
+
+  Scenario: Logger name appears in output
+    Given structured logging is enabled with name "my_service"
+    When I log "Test message" at INFO level
+    Then the log output should include "logger": "my_service"
+
   @wip
   Scenario: Logging to multiple handlers
     When I set up logging with console and file handlers
