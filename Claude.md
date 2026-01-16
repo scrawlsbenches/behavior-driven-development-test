@@ -64,9 +64,6 @@ behave --verbose
 
 # Dry run (validate steps without executing)
 behave --dry-run
-
-# Run original unit tests (still supported)
-python -m graph_of_thought.tests
 ```
 
 ## Project Structure

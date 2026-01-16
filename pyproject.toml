@@ -27,8 +27,6 @@ llm = [
 ]
 test = [
     "behave>=1.2.6",
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
 ]
 dev = [
     "graph-of-thought[llm,test]",
@@ -44,10 +42,6 @@ include = ["graph_of_thought*"]
 paths = ["features"]
 format = ["pretty"]
 junit = false
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["graph_of_thought"]
 
 [tool.mypy]
 python_version = "3.9"
