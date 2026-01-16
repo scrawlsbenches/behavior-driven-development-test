@@ -254,25 +254,6 @@ class StandardLogger:
         self._logger.log(level, message)
 
 
-class NullLogger:
-    """Logger that discards all log messages."""
-
-    def debug(self, message: str, **kwargs: Any) -> None:
-        pass
-
-    def info(self, message: str, **kwargs: Any) -> None:
-        pass
-
-    def warning(self, message: str, **kwargs: Any) -> None:
-        pass
-
-    def error(self, message: str, **kwargs: Any) -> None:
-        pass
-
-    def bind(self, **kwargs: Any) -> NullLogger:
-        return self
-
-
 class StructuredLogger:
     """
     Logger that outputs structured JSON log entries.

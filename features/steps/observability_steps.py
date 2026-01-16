@@ -17,7 +17,6 @@ from graph_of_thought.observability import (
     MetricsRegistry,
     NullMetricsCollector,
     InMemoryMetricsCollector,
-    NullLogger,
     StructuredLogger,
     NullTracingProvider,
 )
@@ -342,14 +341,38 @@ def step_no_error(context):
     assert True
 
 
-@given("a null logger")
-def step_null_logger(context):
-    context.null_logger = NullLogger()
+@given("a logger configured for testing")
+def step_logger_for_testing(context):
+    """Set up a structured logger with captured output for testing."""
+    context.log_output = StringIO()
+    context.test_logger = StructuredLogger(
+        name="test_logger",
+        output=context.log_output,
+    )
 
 
 @when('I log "{message}" at INFO level')
-def step_null_log(context, message):
-    context.null_logger.info(message)
+def step_log_info(context, message):
+    """Log an INFO message using the test logger."""
+    context.test_logger.info(message)
+    context.last_log_message = message
+
+
+@then("the log should contain the message as structured JSON")
+def step_log_contains_structured_json(context):
+    """Verify the log output is valid JSON containing the message."""
+    log_content = context.log_output.getvalue()
+    assert log_content, "No log output captured"
+
+    # Parse the JSON and verify structure
+    for line in log_content.strip().split('\n'):
+        if line:
+            entry = json.loads(line)
+            assert "timestamp" in entry, "Missing timestamp in log entry"
+            assert "level" in entry, "Missing level in log entry"
+            assert "message" in entry, "Missing message in log entry"
+            assert entry["message"] == context.last_log_message, \
+                f"Expected message '{context.last_log_message}', got '{entry['message']}'"
 
 
 @given("a null tracing provider")

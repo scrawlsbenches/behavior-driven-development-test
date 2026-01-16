@@ -257,10 +257,10 @@ Feature: Observability
     When I increment "anything" by 100
     Then no error should occur
 
-  Scenario: Null logger accepts but discards logs
-    Given a null logger
+  Scenario: Logger outputs structured JSON format
+    Given a logger configured for testing
     When I log "test message" at INFO level
-    Then no error should occur
+    Then the log should contain the message as structured JSON
 
   Scenario: Null tracing provider creates null spans
     Given a null tracing provider
