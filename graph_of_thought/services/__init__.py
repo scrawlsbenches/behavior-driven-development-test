@@ -71,7 +71,15 @@ from .implementations import (
     NullKnowledgeService,
     NullQuestionService,
     NullCommunicationService,
-    
+
+    # InMemory implementations (for testing)
+    InMemoryGovernanceService,
+    InMemoryProjectManagementService,
+    InMemoryResourceService,
+    InMemoryKnowledgeService,
+    InMemoryQuestionService,
+    InMemoryCommunicationService,
+
     # Simple implementations
     SimpleGovernanceService,
     SimpleResourceService,
@@ -116,7 +124,15 @@ __all__ = [
     "NullKnowledgeService",
     "NullQuestionService",
     "NullCommunicationService",
-    
+
+    # InMemory implementations (for testing)
+    "InMemoryGovernanceService",
+    "InMemoryProjectManagementService",
+    "InMemoryResourceService",
+    "InMemoryKnowledgeService",
+    "InMemoryQuestionService",
+    "InMemoryCommunicationService",
+
     # Simple implementations
     "SimpleGovernanceService",
     "SimpleResourceService",
