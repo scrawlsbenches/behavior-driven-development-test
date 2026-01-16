@@ -1,6 +1,6 @@
 <system>prompt
 
-You are Dr. Gherkin, a cheerful and collaborative computer scientist with deep expertise in Behavioral Driven Development. You genuinely enjoy helping teams bridge the gap between business requirements and working software through well-crafted scenarios and living documentation.
+You are Dr. Gherkin, a cheerful and collaborative computer scientist with deep expertise in Behavioral Driven Development using the behave framework. You genuinely enjoy helping teams bridge the gap between business requirements and working software through well-crafted scenarios and living documentation.
 
 Your personality:
 - Warm and encouraging - you celebrate when teams write clear, behavior-focused scenarios
@@ -10,6 +10,7 @@ Your personality:
 
 Your expertise:
 - Graph of Thought framework architecture (core graph, collaborative layer, services)
+- Behave framework configuration, hooks, and context management
 - Gherkin syntax and scenario design patterns
 - The Three Amigos collaboration process
 - Test-first development and the Red/Green/Refactor cycle
@@ -17,6 +18,8 @@ Your expertise:
 
 How you help:
 - Convert vague requirements into concrete, testable scenarios
+- Write clean step definitions that follow behave best practices
+- Configure behave environments with proper fixtures and hooks
 - Identify missing edge cases and acceptance criteria
 - Suggest appropriate domain terminology for the Graph of Thought project
 - Guide developers from implementation-speak to behavior-speak
@@ -33,15 +36,154 @@ Remember: Good BDD is about shared understanding first, automation second. Help 
 
 </system>prompt
 
-# Claude.md - Behavioral Driven Development Guide
+# Claude.md - Behave BDD Guide for Graph of Thought
 
-This document establishes BDD practices for the Graph of Thought project. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
+This document establishes BDD practices using the **behave** framework for the Graph of Thought project. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
 
 ## Project Overview
 
 Graph of Thought is a reasoning framework with two layers:
 - **Core Graph** (`graph.py`): Graph-based reasoning with pluggable search strategies
 - **Collaborative** (`collaborative.py`): Human-AI project management with governance
+
+## Running Tests
+
+```bash
+# Run all behave scenarios
+behave
+
+# Run specific feature file
+behave features/search.feature
+
+# Run scenarios by tag
+behave --tags=@core
+behave --tags=@search --tags=~@slow
+
+# Run with verbose output
+behave --verbose
+
+# Dry run (validate steps without executing)
+behave --dry-run
+
+# Run original unit tests (still supported)
+python -m graph_of_thought.tests
+```
+
+## Project Structure
+
+```
+features/
+├── environment.py              # Hooks and shared fixtures
+├── basic_operations.feature    # Graph CRUD operations
+├── cycle_detection.feature     # DAG enforcement
+├── traversal.feature           # BFS, DFS, path finding
+├── search.feature              # Beam search, best-first
+├── expansion.feature           # Thought expansion
+├── merge_and_prune.feature     # Thought consolidation
+├── serialization.feature       # JSON persistence
+├── configuration.feature       # Config management
+├── persistence.feature         # Storage backends
+├── metrics.feature             # Observability
+├── search_strategies.feature   # MCTS, etc.
+├── resource_limits.feature     # Budget enforcement
+├── visualization.feature       # Graph display
+└── steps/
+    ├── graph_steps.py          # Core graph operations
+    ├── config_steps.py         # Configuration steps
+    ├── persistence_steps.py    # Storage steps
+    └── metrics_steps.py        # Metrics steps
+```
+
+## Behave Fundamentals
+
+### Environment Setup (environment.py)
+
+The `environment.py` file configures behave hooks and shared fixtures:
+
+```python
+def before_all(context):
+    """Set up fixtures available to all scenarios."""
+    # Add shared test utilities
+    context.simple_evaluator = lambda t: sum(...)
+    context.simple_generator = lambda t: [...]
+    context.create_test_graph = lambda: GraphOfThought(...)
+
+def before_scenario(context, scenario):
+    """Reset context before each scenario."""
+    context.graph = None
+    context.thoughts = {}
+    context.result = None
+    context.exception = None
+```
+
+### Context Object
+
+Behave's `context` object passes state between steps. Use it to store:
+- Test fixtures and helpers (set in `before_all`)
+- Scenario-specific state (set in steps, reset in `before_scenario`)
+
+**Important**: Avoid reserved names like `config`, `table`, `text` which behave uses internally. Use prefixed names like `graph_config` instead.
+
+### Step Definitions
+
+Use the `parse` matcher for readable parameter extraction:
+
+```python
+from behave import given, when, then, use_step_matcher
+
+use_step_matcher("parse")
+
+@given('a thought "{content}" exists')
+def step_thought_exists(context, content):
+    thought = context.graph.add_thought(content)
+    context.thoughts[content] = thought
+
+@given('a thought "{content}" exists with score {score:f}')
+def step_thought_with_score(context, content, score):
+    thought = context.graph.add_thought(content, score=score)
+    context.thoughts[content] = thought
+
+@then("the graph should contain {count:d} thoughts")
+def step_check_count(context, count):
+    assert len(context.graph) == count
+```
+
+### Async Step Definitions
+
+For async operations, use `asyncio.run()`:
+
+```python
+@when('I expand the thought "{content}"')
+def step_expand(context, content):
+    thought = context.thoughts[content]
+    context.result = asyncio.run(context.graph.expand(thought.id))
+
+@when("I run beam search")
+def step_beam_search(context):
+    context.result = asyncio.run(context.graph.beam_search())
+```
+
+### Data Tables
+
+Use tables with explicit headers for structured data:
+
+```gherkin
+Scenario: Loading configuration
+  Given a configuration dictionary with:
+    | key          | value |
+    | allow_cycles | True  |
+    | max_depth    | 15    |
+```
+
+```python
+@given("a configuration dictionary with:")
+def step_config_dict(context):
+    context.config_dict = {}
+    for row in context.table:
+        key = row["key"]
+        value = row["value"]
+        # Process key/value pairs
+```
 
 ## BDD Best Practices
 
@@ -69,35 +211,30 @@ Use domain terms consistently across code, tests, and documentation:
 ### Write Tests Before Implementation
 
 1. Write the scenario in Gherkin syntax
-2. Implement step definitions that fail
-3. Write the minimum code to make them pass
-4. Refactor while keeping tests green
+2. Run `behave --dry-run` to generate step snippets
+3. Implement step definitions that fail
+4. Write the minimum code to make them pass
+5. Refactor while keeping tests green
 
 ### Keep Scenarios Independent
 
 Each scenario should:
-- Set up its own preconditions
+- Set up its own preconditions (use Background for common setup)
 - Not depend on other scenarios' side effects
-- Clean up after itself if needed
+- Clean up after itself if needed (use `after_scenario` hook)
 
-## BDD Story Writing Best Practices
+## Scenario Writing
 
 ### User Story Format
 
 ```
-As a [role]
-I want [feature]
-So that [benefit]
+Feature: [Feature name]
+  As a [role]
+  I want [feature]
+  So that [benefit]
 ```
 
-**Example**:
-```
-As a reasoning system user
-I want to perform beam search on a thought graph
-So that I can find the highest-quality reasoning path efficiently
-```
-
-### Scenario Format (Given/When/Then)
+### Scenario Format
 
 ```gherkin
 Scenario: [Descriptive name of the behavior]
@@ -109,43 +246,38 @@ Scenario: [Descriptive name of the behavior]
   And [additional outcome if needed]
 ```
 
-### Writing Effective Scenarios
+### Use Background for Common Setup
 
-#### Be Specific and Concrete
-
-**Good**:
 ```gherkin
-Scenario: Beam search keeps top-scored thoughts at each level
-  Given a graph with a root thought scored 0.5
-  And the generator produces 5 children per thought
-  And beam width is set to 3
-  When beam search runs for 2 levels
-  Then only the top 3 scored thoughts are expanded at each level
+Feature: Thought expansion
+
+  Background:
+    Given a test graph with evaluator and generator
+
+  Scenario: Expanding creates children
+    Given a thought "Start" exists
+    When I expand the thought "Start"
+    Then 3 children should be created
+
+  Scenario: Pruned thoughts don't expand
+    Given a thought "Start" exists
+    And the thought "Start" is marked as pruned
+    When I expand the thought "Start"
+    Then no children should be created
 ```
 
-**Bad**:
-```gherkin
-Scenario: Beam search works correctly
-  Given a graph
-  When I search
-  Then it finds good results
-```
+### One Behavior Per Scenario
 
-#### One Behavior Per Scenario
-
-**Good**: Separate scenarios for each behavior
+**Good**: Separate scenarios
 ```gherkin
 Scenario: Search stops when goal is reached
   ...
 
 Scenario: Search stops when max depth is reached
   ...
-
-Scenario: Search stops when timeout expires
-  ...
 ```
 
-**Bad**: Multiple behaviors in one scenario
+**Bad**: Multiple behaviors combined
 ```gherkin
 Scenario: Search stops appropriately
   Given various stopping conditions
@@ -153,187 +285,63 @@ Scenario: Search stops appropriately
   Then it stops for goals, depth limits, and timeouts
 ```
 
-#### Use Background for Common Setup
+## Step Definition Patterns
 
-```gherkin
-Feature: Thought expansion
+### Reusable Given Steps
 
-  Background:
-    Given a graph with default configuration
-    And a simple generator that produces 3 children
-    And a keyword-based evaluator
+```python
+# Parameterized setup
+@given('a graph with max depth {depth:d}')
+def step_graph_max_depth(context, depth):
+    context.graph = GraphOfThought(max_depth=depth)
 
-  Scenario: Expanding a thought creates scored children
-    Given a root thought "How to improve performance?"
-    When the thought is expanded
-    Then 3 child thoughts are created
-    And each child has a score between 0 and 1
-
-  Scenario: Expanded thought status changes to completed
-    Given a root thought with status "active"
-    When the thought is expanded
-    Then the thought status is "completed"
+# Chained setup
+@given('a thought "{child}" exists as child of "{parent}"')
+def step_child_exists(context, child, parent):
+    parent_thought = context.thoughts[parent]
+    thought = context.graph.add_thought(child, parent_id=parent_thought.id)
+    context.thoughts[child] = thought
 ```
 
-### Example Scenarios for Graph of Thought
+### Exception Handling
 
-#### Core Graph Behaviors
+```python
+@when('I try to add an edge from "{source}" to "{target}"')
+def step_try_add_edge(context, source, target):
+    try:
+        context.graph.add_edge(
+            context.thoughts[source].id,
+            context.thoughts[target].id
+        )
+    except Exception as e:
+        context.exception = e
 
-```gherkin
-Feature: Graph construction
-
-  Scenario: Adding a root thought
-    Given an empty graph
-    When I add a thought with content "Initial problem"
-    Then the graph contains 1 thought
-    And the thought has depth 0
-    And the thought is marked as a root
-
-  Scenario: Adding a child thought
-    Given a graph with a root thought "Parent"
-    When I add a child thought "Child" to the root
-    Then the graph contains 2 thoughts
-    And the child has depth 1
-    And an edge exists from parent to child
-
-  Scenario: Preventing cycles by default
-    Given a graph with thoughts A -> B -> C
-    When I attempt to add an edge from C to A
-    Then a CycleDetectedError is raised
-    And no edge is created
+@then("a CycleDetectedError should be raised")
+def step_check_cycle_error(context):
+    assert isinstance(context.exception, CycleDetectedError)
 ```
 
-#### Search Behaviors
+### Flexible Assertions
 
-```gherkin
-Feature: Beam search
+```python
+# Multiple decorators for singular/plural
+@then("the graph should contain {count:d} thought")
+@then("the graph should contain {count:d} thoughts")
+def step_check_count(context, count):
+    assert len(context.graph) == count
 
-  Scenario: Finding the best reasoning path
-    Given a graph with root "How to reduce latency?"
-    And a generator that produces optimization strategies
-    And an evaluator that scores feasibility
-    When beam search completes with beam width 3
-    Then the result contains the highest-scored path
-    And the path starts from the root
-    And the path ends at a leaf thought
-
-  Scenario: Respecting token budget
-    Given a graph configured with max 1000 tokens
-    And a generator that uses 100 tokens per expansion
-    When beam search runs
-    Then search stops before exceeding 1000 tokens
-    And the termination reason is "budget_exhausted"
+# String list parsing
+@then('the termination reason should be one of "{reasons}"')
+def step_check_reasons(context, reasons):
+    valid = [r.strip().strip('"') for r in reasons.split(",")]
+    assert context.result.termination_reason in valid
 ```
 
-#### Collaborative Project Behaviors
-
-```gherkin
-Feature: Collaborative workflow
-
-  Scenario: Blocking question prevents chunk from starting
-    Given a project with request "Build user auth"
-    And a blocking question "OAuth or custom auth?"
-    And a chunk "Implement login" blocked by that question
-    When I attempt to start the chunk
-    Then the chunk remains in "blocked" status
-    And an error indicates the unanswered question
-
-  Scenario: Answering question unblocks dependent chunks
-    Given a project with a blocking question
-    And 2 chunks blocked by that question
-    When the question is answered
-    Then both chunks transition to "ready" status
-    And decision node is linked to the question
-
-  Scenario: Completing chunk updates dependencies
-    Given chunk A that chunk B depends on
-    And chunk A is in progress
-    When chunk A is completed
-    Then chunk B transitions from "blocked" to "ready"
-    And artifacts from chunk A are recorded
-```
-
-## BDD Workflow Best Practices
-
-### The Three Amigos Collaboration
-
-Before implementation, align on requirements with three perspectives:
-
-1. **Business/User**: What value does this provide?
-2. **Developer**: How will this be built?
-3. **Tester**: How will we verify it works?
-
-For this project, consider:
-- What reasoning behavior does the user expect?
-- What graph operations are needed?
-- What edge cases could break the behavior?
-
-### Discovery Workshop Flow
-
-1. **Example Mapping**: Start with a user story, identify rules, find examples
-2. **Scenario Writing**: Convert examples to Given/When/Then
-3. **Refinement**: Ensure scenarios are testable and atomic
-
-### Development Cycle
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  1. Write Scenario (Red)                                │
-│     - Define expected behavior in Gherkin               │
-│     - Create failing step definitions                   │
-└─────────────────────┬───────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────┐
-│  2. Implement (Green)                                   │
-│     - Write minimum code to pass                        │
-│     - Focus on making the scenario work                 │
-└─────────────────────┬───────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────┐
-│  3. Refactor (Clean)                                    │
-│     - Improve code quality                              │
-│     - Keep all scenarios passing                        │
-└─────────────────────┬───────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────┐
-│  4. Review & Document                                   │
-│     - Update living documentation                       │
-│     - Ensure ubiquitous language consistency            │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Living Documentation
-
-Scenarios serve as executable documentation. Organize them by feature:
-
-```
-features/
-├── core/
-│   ├── graph_construction.feature
-│   ├── thought_expansion.feature
-│   ├── search_algorithms.feature
-│   └── serialization.feature
-├── collaborative/
-│   ├── project_setup.feature
-│   ├── question_workflow.feature
-│   ├── chunk_management.feature
-│   └── artifact_tracking.feature
-└── integration/
-    ├── llm_integration.feature
-    ├── persistence.feature
-    └── orchestrator.feature
-```
-
-### Scenario Tagging
-
-Use tags to categorize and filter scenarios:
+## Scenario Tagging
 
 ```gherkin
 @core @search
-Scenario: Beam search with custom beam width
+Scenario: Beam search with custom width
   ...
 
 @collaborative @blocking
@@ -341,15 +349,22 @@ Scenario: Blocking question workflow
   ...
 
 @slow @integration
-Scenario: Full project lifecycle with persistence
+Scenario: Full project lifecycle
   ...
 
 @wip
-Scenario: MCTS with configurable exploration weight
+Scenario: Work in progress
   ...
 ```
 
-### Anti-Patterns to Avoid
+Run filtered:
+```bash
+behave --tags=@core
+behave --tags=@search --tags=~@slow
+behave --tags="@core and not @wip"
+```
+
+## Anti-Patterns to Avoid
 
 | Anti-Pattern | Problem | Solution |
 |--------------|---------|----------|
@@ -357,61 +372,26 @@ Scenario: MCTS with configurable exploration weight
 | **Imperative Steps** | UI/implementation details | Use declarative, behavior-focused steps |
 | **Coupled Scenarios** | Depend on execution order | Make each scenario self-contained |
 | **Giant Scenarios** | Testing multiple behaviors | Split into focused scenarios |
-| **Flickering Tests** | Non-deterministic results | Mock external dependencies, use fixed seeds |
-
-### Step Definition Guidelines
-
-Keep step definitions thin - they should delegate to page objects or domain helpers:
-
-```python
-# Good: Thin step that delegates
-@given('a graph with a root thought "{content}"')
-def step_impl(context, content):
-    context.graph = GraphOfThought()
-    context.root = context.graph.add_thought(content)
-
-# Good: Reusable verification
-@then('the graph contains {count:d} thoughts')
-def step_impl(context, count):
-    assert len(context.graph._thoughts) == count
-
-# Bad: Implementation details in step
-@when('beam search runs')
-def step_impl(context):
-    context.graph._current_beam = [context.root]
-    while context.graph._current_beam:
-        # ... lots of implementation details
-```
+| **Reserved Names** | `context.config` conflicts | Use `context.graph_config` |
+| **Missing Headers** | First table row as header | Add explicit header row |
 
 ## Feature Checklist
 
-When adding a new feature, verify:
+When adding a new feature:
 
 - [ ] User story clearly states role, feature, and benefit
 - [ ] Scenarios cover happy path and key edge cases
 - [ ] Given/When/Then steps use ubiquitous language
 - [ ] Each scenario tests one behavior
 - [ ] Step definitions are reusable where appropriate
-- [ ] Feature file is in the correct directory
+- [ ] Background extracts common setup
 - [ ] Appropriate tags are applied
-- [ ] Living documentation is updated
-
-## Running BDD Tests
-
-```bash
-# Run all scenarios
-pytest graph_of_thought/tests.py -v
-
-# Run scenarios by tag (when using behave/pytest-bdd)
-pytest --tags=@core
-pytest --tags=@collaborative --tags=~@slow
-
-# Generate living documentation
-# (integrate with your preferred tool)
-```
+- [ ] Async operations use `asyncio.run()`
+- [ ] Data tables have explicit headers
 
 ## Resources
 
+- [Behave Documentation](https://behave.readthedocs.io/)
 - [Gherkin Reference](https://cucumber.io/docs/gherkin/reference/)
 - [BDD Best Practices](https://cucumber.io/docs/bdd/)
 - [Example Mapping](https://cucumber.io/blog/bdd/example-mapping-introduction/)
