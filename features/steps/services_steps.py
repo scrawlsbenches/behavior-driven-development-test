@@ -4,11 +4,11 @@ Step definitions for service implementations BDD tests.
 from behave import given, when, then, use_step_matcher
 
 from graph_of_thought.services.implementations import (
-    NullGovernanceService,
-    NullResourceService,
-    NullKnowledgeService,
-    NullQuestionService,
-    NullCommunicationService,
+    InMemoryGovernanceService,
+    InMemoryResourceService,
+    InMemoryKnowledgeService,
+    InMemoryQuestionService,
+    InMemoryCommunicationService,
     SimpleGovernanceService,
     SimpleResourceService,
     SimpleKnowledgeService,
@@ -27,22 +27,25 @@ use_step_matcher("parse")
 
 
 # =============================================================================
-# Null Services
+# InMemory Services (for testing with configurable behavior)
 # =============================================================================
 
-@given("a null governance service")
-def step_null_governance(context):
-    context.governance = NullGovernanceService()
+@given("an in-memory governance service")
+def step_inmemory_governance(context):
+    # Configure to auto-approve everything (like the old Null behavior)
+    context.governance = InMemoryGovernanceService(default_status=ApprovalStatus.APPROVED)
 
 
-@given("a null resource service")
-def step_null_resource(context):
-    context.resource_service = NullResourceService()
+@given("an in-memory resource service")
+def step_inmemory_resource(context):
+    # Configure with unlimited resources (like the old Null behavior)
+    context.resource_service = InMemoryResourceService(unlimited=True)
 
 
-@given("a null knowledge service")
-def step_null_knowledge(context):
-    context.knowledge = NullKnowledgeService()
+@given("an in-memory knowledge service")
+def step_inmemory_knowledge(context):
+    # Configure to not find anything on retrieve (like the old Null behavior)
+    context.knowledge = InMemoryKnowledgeService(retrieval_enabled=False)
 
 
 @when('I check approval for action "{action}"')

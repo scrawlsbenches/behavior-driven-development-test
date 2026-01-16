@@ -1,16 +1,16 @@
 """
-Service Implementations - Null and simple implementations for all services.
+Service Implementations - InMemory and simple implementations for all services.
 
 These provide working defaults that can be replaced with production implementations.
 
 ARCHITECTURE NOTE:
-    Null implementations allow the system to function without any external dependencies.
-    Simple implementations use in-memory storage and basic logic.
+    InMemory implementations provide testable defaults with configurable behavior.
+    Simple implementations use in-memory storage and basic business logic.
     Production implementations would connect to real systems (databases, APIs, etc.)
-    
+
     Upgrade path:
-    1. Start with Null (system works, no features)
-    2. Move to Simple (features work, in-memory only)
+    1. Start with InMemory (testable, configurable defaults)
+    2. Move to Simple (features work, in-memory storage)
     3. Move to Production (persistent, integrated)
 """
 
@@ -42,45 +42,8 @@ from .protocols import (
 
 
 # =============================================================================
-# Null Implementations (Pass-through, no-op)
+# InMemory Implementations (Testable defaults with configurable behavior)
 # =============================================================================
-
-class NullGovernanceService:
-    """
-    Governance that approves everything.
-    
-    Use when: You don't need approval workflows yet.
-    Upgrade to: SimpleGovernanceService when you want basic policy checks,
-                or a real implementation when you need external approvals.
-    """
-    
-    def check_approval(
-        self,
-        action: str,
-        context: dict[str, Any],
-    ) -> tuple[ApprovalStatus, str]:
-        return ApprovalStatus.APPROVED, "No governance configured - auto-approved"
-    
-    def request_approval(
-        self,
-        action: str,
-        context: dict[str, Any],
-        justification: str,
-    ) -> str:
-        return f"null-approval-{uuid.uuid4().hex[:8]}"
-    
-    def get_policies(self, scope: str) -> list[dict[str, Any]]:
-        return []
-    
-    def record_audit(
-        self,
-        action: str,
-        context: dict[str, Any],
-        result: str,
-        actor: str,
-    ) -> None:
-        pass  # No-op
-
 
 class InMemoryGovernanceService:
     """
@@ -89,9 +52,9 @@ class InMemoryGovernanceService:
     Use when: Writing BDD tests that need to verify governance behavior,
               such as approval workflows, policy enforcement, and audit logging.
 
-    Unlike NullGovernanceService (which auto-approves everything) and
-    SimpleGovernanceService (which has fixed default policies), this
+    Unlike SimpleGovernanceService (which has fixed default policies), this
     implementation provides full control over policies and state for testing.
+    By default, it auto-approves everything (configurable via default_status).
 
     Features:
     - Configurable policies via constructor or methods
@@ -441,38 +404,6 @@ class InMemoryGovernanceService:
         return len(self._policies)
 
 
-class NullProjectManagementService:
-    """
-    Project management that returns empty results.
-    
-    Use when: Using only single-project CollaborativeProject directly.
-    Upgrade to: SimpleProjectManagementService for cross-project views.
-    """
-    
-    def get_active_projects(self) -> list[dict[str, Any]]:
-        return []
-    
-    def get_blocked_items(self, project_id: str | None = None) -> list[dict[str, Any]]:
-        return []
-    
-    def get_ready_items(self, project_id: str | None = None) -> list[dict[str, Any]]:
-        return []
-    
-    def get_next_action(self, available_time_hours: float = 2.0) -> dict[str, Any] | None:
-        return None
-    
-    def update_estimate(
-        self,
-        item_id: str,
-        actual_hours: float,
-        notes: str = "",
-    ) -> None:
-        pass
-    
-    def get_timeline(self, project_id: str) -> dict[str, Any]:
-        return {}
-
-
 class InMemoryProjectManagementService:
     """
     In-memory project management service for testing.
@@ -713,63 +644,6 @@ class InMemoryProjectManagementService:
         }
 
 
-class NullResourceService:
-    """
-    Resource service that never limits.
-    
-    Use when: You don't need budget tracking yet.
-    Upgrade to: SimpleResourceService when you want to track consumption.
-    
-    WARNING: Without resource limits, runaway processes can be expensive.
-    At minimum, implement token tracking for LLM calls.
-    """
-    
-    def get_budget(
-        self,
-        resource_type: ResourceType,
-        scope_type: str,
-        scope_id: str,
-    ) -> ResourceBudget | None:
-        return None  # No budget = unlimited
-    
-    def allocate(
-        self,
-        resource_type: ResourceType,
-        scope_type: str,
-        scope_id: str,
-        amount: float,
-    ) -> bool:
-        return True  # Always succeeds
-    
-    def consume(
-        self,
-        resource_type: ResourceType,
-        scope_type: str,
-        scope_id: str,
-        amount: float,
-        description: str = "",
-    ) -> bool:
-        return True  # Always succeeds
-    
-    def check_available(
-        self,
-        resource_type: ResourceType,
-        scope_type: str,
-        scope_id: str,
-        amount: float,
-    ) -> tuple[bool, float]:
-        return True, float('inf')  # Infinite resources
-    
-    def get_consumption_report(
-        self,
-        scope_type: str,
-        scope_id: str,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None,
-    ) -> dict[str, Any]:
-        return {"message": "No resource tracking configured"}
-
-
 class InMemoryResourceService:
     """
     Testable in-memory resource service for BDD testing.
@@ -802,6 +676,7 @@ class InMemoryResourceService:
     def __init__(
         self,
         initial_budgets: dict[tuple[ResourceType, str, str], float] | None = None,
+        unlimited: bool = False,
     ):
         """
         Initialize with optional pre-configured budgets.
@@ -809,10 +684,13 @@ class InMemoryResourceService:
         Args:
             initial_budgets: Dict mapping (resource_type, scope_type, scope_id)
                            to budget amounts
+            unlimited: If True, check_available always returns (True, inf)
+                      for any scope without explicit budget (like old Null behavior)
         """
         # Key: (resource_type, scope_type, scope_id)
         self._budgets: dict[tuple[ResourceType, str, str], ResourceBudget] = {}
         self._consumption_history: list[InMemoryResourceService.ConsumptionRecord] = []
+        self._unlimited = unlimited
 
         # Initialize any provided budgets
         if initial_budgets:
@@ -1125,49 +1003,11 @@ class InMemoryResourceService:
         return budget.is_exhausted() if budget else False
 
 
-class NullKnowledgeService:
-    """
-    Knowledge service that stores nothing and finds nothing.
-
-    Use when: Just getting started, no knowledge base yet.
-    Upgrade to: SimpleKnowledgeService for in-memory keyword search,
-                then to a vector DB implementation for semantic search.
-
-    COST OF NOT UPGRADING: You'll repeatedly solve the same problems
-    and make contradictory decisions because nothing is remembered.
-    """
-    
-    def store(self, entry: KnowledgeEntry) -> str:
-        return f"null-{uuid.uuid4().hex[:8]}"  # Pretend to store
-    
-    def retrieve(
-        self,
-        query: str,
-        entry_types: list[str] | None = None,
-        project_filter: str | None = None,
-        limit: int = 5,
-    ) -> list[KnowledgeEntry]:
-        return []  # Never finds anything
-    
-    def record_decision(self, decision: Decision) -> str:
-        return f"null-decision-{uuid.uuid4().hex[:8]}"
-    
-    def find_contradictions(
-        self,
-        proposed_decision: str,
-        project_id: str | None = None,
-    ) -> list[Decision]:
-        return []
-    
-    def get_patterns_for_problem(self, problem_description: str) -> list[KnowledgeEntry]:
-        return []
-
-
 class InMemoryKnowledgeService:
     """
     In-memory knowledge service for testing and development.
 
-    Unlike NullKnowledgeService, this actually stores entries and supports retrieval.
+    This implementation stores entries and supports retrieval.
     Unlike SimpleKnowledgeService, this has no persistence and includes test-friendly
     query methods for assertions.
 
@@ -1180,9 +1020,17 @@ class InMemoryKnowledgeService:
     - clear() method to reset state between tests
     """
 
-    def __init__(self):
+    def __init__(self, retrieval_enabled: bool = True):
+        """
+        Initialize the knowledge service.
+
+        Args:
+            retrieval_enabled: If False, retrieve() always returns empty list
+                              (like old Null behavior). Default True.
+        """
         self._entries: dict[str, KnowledgeEntry] = {}
         self._decisions: dict[str, Decision] = {}
+        self._retrieval_enabled = retrieval_enabled
 
     # =========================================================================
     # KnowledgeService Protocol Implementation
@@ -1207,7 +1055,12 @@ class InMemoryKnowledgeService:
 
         Searches entry content and tags for query terms.
         Results are ranked by number of matching keywords.
+
+        If retrieval_enabled is False, always returns empty list.
         """
+        if not self._retrieval_enabled:
+            return []
+
         query_terms = query.lower().split()
 
         results: list[tuple[float, KnowledgeEntry]] = []
@@ -1306,63 +1159,6 @@ class InMemoryKnowledgeService:
         self._decisions.clear()
 
 
-class NullQuestionService:
-    """
-    Question service that doesn't route or track.
-    
-    Use when: Questions are handled manually in conversation.
-    Upgrade to: SimpleQuestionService for tracking and batching.
-    """
-    
-    def ask(
-        self,
-        question: str,
-        context: str = "",
-        priority: Priority = Priority.MEDIUM,
-        asker: str = "ai",
-    ) -> QuestionTicket:
-        return QuestionTicket(
-            id=f"null-q-{uuid.uuid4().hex[:8]}",
-            question=question,
-            context=context,
-            priority=priority,
-            asker=asker,
-            status="open",
-            routed_to="human",
-            routing_reason="No routing configured",
-        )
-    
-    def answer(
-        self,
-        ticket_id: str,
-        answer: str,
-        answered_by: str = "human",
-    ) -> QuestionTicket:
-        return QuestionTicket(
-            id=ticket_id,
-            question="(unknown - null service)",
-            answer=answer,
-            answered_by=answered_by,
-            status="answered",
-        )
-    
-    def get_pending(
-        self,
-        for_user: str | None = None,
-        priority_filter: Priority | None = None,
-    ) -> list[QuestionTicket]:
-        return []
-    
-    def get_batched(self) -> dict[Priority, list[QuestionTicket]]:
-        return {p: [] for p in Priority}
-    
-    def try_auto_answer(self, ticket_id: str) -> bool:
-        return False  # Never auto-answers
-    
-    def route(self, ticket_id: str) -> str:
-        return "human"  # Always routes to human
-
-
 class InMemoryQuestionService:
     """
     Testable in-memory question service with full state tracking.
@@ -1370,8 +1166,8 @@ class InMemoryQuestionService:
     Use when: You need a testable QuestionService that tracks all state
     for assertions in BDD tests.
 
-    Unlike NullQuestionService (which discards state) and SimpleQuestionService
-    (which focuses on production use), this implementation:
+    Unlike SimpleQuestionService (which focuses on production use),
+    this implementation:
     - Stores all tickets, answers, and routing decisions
     - Provides query methods for test assertions
     - Supports basic keyword routing (like SimpleQuestionService)
@@ -1586,56 +1382,6 @@ class InMemoryQuestionService:
         """
         self._tickets.clear()
         self._routing_history.clear()
-
-
-class NullCommunicationService:
-    """
-    Communication service that creates minimal handoffs.
-
-    Use when: You're managing context manually.
-    Upgrade to: SimpleCommunicationService for automatic context gathering.
-    """
-    
-    def create_handoff(
-        self,
-        handoff_type: str,
-        project_id: str,
-        chunk_id: str | None = None,
-    ) -> HandoffPackage:
-        return HandoffPackage(
-            id=f"null-handoff-{uuid.uuid4().hex[:8]}",
-            handoff_type=handoff_type,
-            project_id=project_id,
-            chunk_id=chunk_id or "",
-        )
-    
-    def get_resumption_context(self, project_id: str) -> str:
-        return f"# Project: {project_id}\n\nNo context available (null service)."
-    
-    def record_intent(
-        self,
-        project_id: str,
-        chunk_id: str | None,
-        intent: str,
-        constraints: list[str],
-    ) -> None:
-        pass
-    
-    def record_feedback(
-        self,
-        target_type: str,
-        target_id: str,
-        feedback: str,
-        rating: int | None = None,
-    ) -> None:
-        pass
-    
-    def compress_history(
-        self,
-        project_id: str,
-        max_tokens: int = 4000,
-    ) -> str:
-        return ""
 
 
 @dataclass
