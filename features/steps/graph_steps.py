@@ -19,8 +19,9 @@ from graph_of_thought import (
     InMemoryMetricsCollector,
 )
 from graph_of_thought.persistence import InMemoryPersistence
-from graph_of_thought.search import MCTSStrategy
+from graph_of_thought.search import MCTSStrategy, BeamSearchStrategy, IterativeDeepeningStrategy
 from graph_of_thought.core.defaults import FunctionGenerator, FunctionEvaluator
+import time
 
 use_step_matcher("parse")
 
@@ -72,6 +73,45 @@ def step_length_based_graph(context):
     context.graph = GraphOfThought[str](
         evaluator=lambda t: len(t) / 50,
         generator=lambda t: [f"{t}a", f"{t}b"],
+        max_depth=5,
+    )
+
+
+@given("a graph with slow evaluator")
+def step_slow_evaluator_graph(context):
+    def slow_evaluator(t):
+        time.sleep(0.15)  # Slow enough to trigger timeout
+        return len(t) / 50
+
+    context.graph = GraphOfThought[str](
+        evaluator=slow_evaluator,
+        generator=lambda t: [f"{t}a", f"{t}b"],
+        max_depth=5,
+    )
+
+
+@given("a graph with goal-reaching generator")
+def step_goal_reaching_graph(context):
+    def goal_generator(t):
+        if len(t) > 10:
+            return [f"{t}_GOAL"]
+        return [f"{t}a", f"{t}b"]
+
+    context.graph = GraphOfThought[str](
+        evaluator=lambda t: 1.0 if "GOAL" in t else 0.5,
+        generator=goal_generator,
+        max_depth=10,
+    )
+
+
+@given("a graph with varied score evaluator")
+def step_varied_score_graph(context):
+    import random
+    random.seed(42)  # For reproducibility
+
+    context.graph = GraphOfThought[str](
+        evaluator=lambda t: random.random(),
+        generator=lambda t: [f"{t}a", f"{t}b", f"{t}c"],
         max_depth=5,
     )
 
@@ -253,6 +293,60 @@ def step_run_beam_search_max_exp(context, max_exp):
 def step_run_mcts(context, weight, max_exp):
     strategy = MCTSStrategy[str](exploration_weight=weight)
     config = SearchConfig(max_expansions=max_exp, max_depth=5)
+
+    context.result = asyncio.run(strategy.search(
+        graph=context.graph.as_operations(),
+        generator=FunctionGenerator(lambda t: [f"{t}a", f"{t}b"]),
+        evaluator=FunctionEvaluator(lambda t: len(t) / 50),
+        config=config,
+    ))
+
+
+@when("I run beam search strategy with beam width {width:d} and max expansions {max_exp:d}")
+def step_run_beam_search_strategy(context, width, max_exp):
+    strategy = BeamSearchStrategy[str]()
+    config = SearchConfig(max_expansions=max_exp, max_depth=5, beam_width=width)
+
+    context.result = asyncio.run(strategy.search(
+        graph=context.graph.as_operations(),
+        generator=FunctionGenerator(lambda t: [f"{t}a", f"{t}b"]),
+        evaluator=FunctionEvaluator(lambda t: len(t) / 50),
+        config=config,
+    ))
+
+
+@when("I run beam search strategy with timeout {timeout:f} seconds")
+def step_run_beam_search_timeout(context, timeout):
+    strategy = BeamSearchStrategy[str]()
+    config = SearchConfig(max_expansions=100, max_depth=10, timeout_seconds=timeout)
+
+    # Use graph's evaluator (which is slow) to trigger timeout
+    context.result = asyncio.run(strategy.search(
+        graph=context.graph.as_operations(),
+        generator=context.graph._generator,
+        evaluator=context.graph._evaluator,
+        config=config,
+    ))
+
+
+@when("I run beam search strategy with goal predicate")
+def step_run_beam_search_with_goal_predicate(context):
+    strategy = BeamSearchStrategy[str]()
+    config = SearchConfig(max_expansions=50, max_depth=10)
+
+    context.result = asyncio.run(strategy.search(
+        graph=context.graph.as_operations(),
+        generator=FunctionGenerator(lambda t: [f"{t}_GOAL"] if len(t) > 10 else [f"{t}a", f"{t}b"]),
+        evaluator=FunctionEvaluator(lambda t: 1.0 if "GOAL" in t else 0.5),
+        config=config,
+        goal=lambda t: "GOAL" in t,
+    ))
+
+
+@when("I run iterative deepening search with max depth {max_depth:d}")
+def step_run_iterative_deepening(context, max_depth):
+    strategy = IterativeDeepeningStrategy[str]()
+    config = SearchConfig(max_expansions=50, max_depth=max_depth)
 
     context.result = asyncio.run(strategy.search(
         graph=context.graph.as_operations(),

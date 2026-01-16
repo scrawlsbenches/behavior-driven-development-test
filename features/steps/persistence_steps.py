@@ -2,9 +2,12 @@
 Step definitions for persistence-related BDD tests.
 """
 import asyncio
+import tempfile
+import shutil
+from pathlib import Path
 from behave import given, when, then, use_step_matcher
 
-from graph_of_thought.persistence import InMemoryPersistence
+from graph_of_thought.persistence import InMemoryPersistence, FilePersistence
 
 use_step_matcher("parse")
 
@@ -18,13 +21,20 @@ def step_in_memory_persistence(context):
     context.persistence = InMemoryPersistence()
 
 
+@given("a file persistence backend")
+def step_file_persistence(context):
+    context.temp_dir = tempfile.mkdtemp()
+    context.persistence = FilePersistence(context.temp_dir)
+
+
 # =============================================================================
 # Persistence Actions
 # =============================================================================
 
 @when('I save the graph with id "{graph_id}" and metadata "{key}" = {value}')
 def step_save_graph_with_metadata(context, graph_id, key, value):
-    # Parse the value
+    # Parse the value - handle quoted strings
+    value = value.strip('"')
     if value == "True":
         parsed_value = True
     elif value == "False":
@@ -39,6 +49,7 @@ def step_save_graph_with_metadata(context, graph_id, key, value):
         root_ids=context.graph.root_ids,
         metadata={key: parsed_value},
     ))
+    context.last_graph_id = graph_id
 
 
 @when('I save a graph with id "{graph_id}"')
@@ -50,6 +61,7 @@ def step_save_graph(context, graph_id):
         root_ids=[],
         metadata={},
     ))
+    context.last_graph_id = graph_id
 
 
 @when('I load the graph with id "{graph_id}"')
@@ -83,6 +95,16 @@ def step_delete_graph(context, graph_id):
     context.deleted = asyncio.run(context.persistence.delete_graph(graph_id))
 
 
+@when('I try to load graph "{graph_id}"')
+def step_try_load_graph(context, graph_id):
+    context.loaded = asyncio.run(context.persistence.load_graph(graph_id))
+
+
+@when('I try to load checkpoint "{cp_id}" for graph "{graph_id}"')
+def step_try_load_checkpoint(context, cp_id, graph_id):
+    context.checkpoint_loaded = asyncio.run(context.persistence.load_checkpoint(graph_id, cp_id))
+
+
 # =============================================================================
 # Persistence Assertions
 # =============================================================================
@@ -95,6 +117,8 @@ def step_check_loaded_thoughts(context, count):
 
 @then('the loaded metadata should have "{key}" = {value}')
 def step_check_loaded_metadata(context, key, value):
+    # Handle quoted strings
+    value = value.strip('"')
     if value == "True":
         expected = True
     elif value == "False":
@@ -113,3 +137,35 @@ def step_check_loaded_search_state(context, key, value):
 def step_check_graph_deleted(context, graph_id):
     loaded = asyncio.run(context.persistence.load_graph(graph_id))
     assert loaded is None, f"Expected None, got {loaded}"
+
+
+@then('a JSON file should exist for graph "{graph_id}"')
+def step_check_json_exists(context, graph_id):
+    path = Path(context.temp_dir) / f"{graph_id}.json"
+    assert path.exists(), f"Expected JSON file at {path}"
+
+
+@then('the JSON file for "{graph_id}" should not exist')
+def step_check_json_not_exists(context, graph_id):
+    path = Path(context.temp_dir) / f"{graph_id}.json"
+    assert not path.exists(), f"Expected no JSON file at {path}, but it exists"
+
+
+@then("the load result should be nothing")
+def step_check_load_nothing(context):
+    assert context.loaded is None, f"Expected None, got {context.loaded}"
+
+
+@then("the checkpoint load result should be nothing")
+def step_check_checkpoint_load_nothing(context):
+    assert context.checkpoint_loaded is None, f"Expected None, got {context.checkpoint_loaded}"
+
+
+# =============================================================================
+# Cleanup
+# =============================================================================
+
+def after_scenario(context, scenario):
+    """Clean up temp directories after each scenario."""
+    if hasattr(context, 'temp_dir'):
+        shutil.rmtree(context.temp_dir, ignore_errors=True)
