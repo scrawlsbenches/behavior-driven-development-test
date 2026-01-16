@@ -25,10 +25,8 @@ Feature: Observability
   # StructuredLogger outputs JSON with context binding support.
   # Use StructuredLogger(output=StringIO()) for testing, or output to stderr in production.
   #
-  # ESCAPE CLAUSE: InMemoryMetricsCollector doesn't persist.
-  # Current: All metrics lost on restart.
-  # Requires: Periodic flush to persistent storage or metrics backend.
-  # Depends: Prometheus/StatsD integration
+  # MOVED: InMemoryMetricsCollector scenarios moved to features/metrics_collector.feature
+  # See that file for testing-focused metrics collector specifications.
 
   # ===========================================================================
   # Logging Setup
@@ -243,57 +241,8 @@ Feature: Observability
     Then both collectors should have the metric
 
   # ===========================================================================
-  # In-Memory Metrics Collector
-  # ===========================================================================
-
-  Scenario: In-memory collector tracks counters
-    Given an in-memory collector for observability
-    When I increment "api_calls" by 5
-    And I increment "api_calls" by 3
-    Then the counter "api_calls" should be 8
-
-  Scenario: In-memory collector tracks gauges
-    Given an in-memory collector for observability
-    When I set gauge "queue_size" to 10
-    And I set gauge "queue_size" to 5
-    Then the gauge "queue_size" should be 5
-
-  Scenario: In-memory collector supports tags
-    Given an in-memory collector for observability
-    When I increment "requests" with tag "endpoint" = "users"
-    And I increment "requests" with tag "endpoint" = "orders"
-    Then both tagged metrics should be tracked
-
-  # --- In-Memory Collector Edge Cases (TODO: Implement) ---
-
-  # ESCAPE CLAUSE: No histogram bucketing.
-  # Current: Histograms stored as raw values list.
-  # Requires: Configurable buckets, automatic aggregation.
-  # Depends: None
-  @wip
-  Scenario: In-memory collector aggregates histogram buckets
-    Given an in-memory collector with histogram buckets [10, 50, 100, 500]
-    When I record histogram "response_time" with values 5, 25, 75, 200, 1000
-    Then bucket 10 should have count 1
-    And bucket 50 should have count 2
-    And bucket 100 should have count 3
-    And bucket 500 should have count 4
-    And bucket +Inf should have count 5
-
-  @wip
-  Scenario: In-memory collector computes histogram percentiles
-    Given an in-memory collector for observability
-    When I record histogram "latency" with 1000 values from normal distribution
-    Then I should be able to query p50, p90, p99 percentiles
-
-  Scenario: In-memory collector resets counters
-    Given an in-memory collector for observability
-    And counter "requests" with value 100
-    When I reset all metrics
-    Then the counter "requests" should be 0
-
-  # ===========================================================================
   # Null Implementations
+  # Note: InMemoryMetricsCollector is now in features/metrics_collector.feature
   # ===========================================================================
 
   Scenario: Null metrics collector accepts but discards metrics

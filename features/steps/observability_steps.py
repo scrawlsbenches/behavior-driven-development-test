@@ -371,12 +371,7 @@ def step_check_metric_value(context, name, value):
     assert context.collector.counters.get(name, 0) == value
 
 
-@when('I set gauge "{name}" to {value:d}')
-def step_set_gauge_registry(context, name, value):
-    if hasattr(context, 'registry') and context.registry:
-        context.registry.gauge(name, float(value))
-    else:
-        context.collector.gauge(name, float(value))
+# Note: "When I set gauge" step is in metrics_steps.py
 
 
 @then('the collector should have gauge "{name}" with value {value:d}')
@@ -384,12 +379,7 @@ def step_check_gauge_value(context, name, value):
     assert context.collector.gauges.get(name, 0) == float(value)
 
 
-@when('I record histogram "{name}" with value {value:d}')
-def step_record_histogram_registry(context, name, value):
-    if hasattr(context, 'registry') and context.registry:
-        context.registry.histogram(name, float(value))
-    else:
-        context.collector.histogram(name, float(value))
+# Note: "When I record histogram" step is in metrics_steps.py
 
 
 @then('the collector should have histogram "{name}"')
@@ -397,12 +387,7 @@ def step_check_histogram(context, name):
     assert name in context.collector.histograms
 
 
-@when('I record timing "{name}" with {value:f} ms')
-def step_record_timing_registry(context, name, value):
-    if hasattr(context, 'registry') and context.registry:
-        context.registry.timing(name, value)
-    else:
-        context.collector.timing(name, value)
+# Note: "When I record timing" step is in metrics_steps.py
 
 
 @then('the collector should have timing "{name}"')
@@ -456,10 +441,7 @@ def step_counter_with_value(context, name, value):
     context.collector.increment(name, value)
 
 
-@when("I reset all metrics")
-def step_reset_all_metrics(context):
-    """Reset all metrics in the collector."""
-    context.collector.reset()
+# Note: "When I reset all metrics" step is in metrics_steps.py
 
 
 # =============================================================================
