@@ -6,9 +6,13 @@ Feature: Observability
   # ===========================================================================
   # FEATURE-LEVEL ESCAPE CLAUSES
   # ===========================================================================
-  # ESCAPE CLAUSE: No distributed tracing implementation.
-  # Current: NullTracingProvider that creates no-op spans.
-  # Requires: OpenTelemetry/Jaeger integration, span context propagation.
+  # RESOLVED: In-memory tracing implemented via InMemoryTracingProvider class.
+  # InMemoryTracingProvider stores spans in memory for testing and debugging.
+  # See features/tracing.feature for detailed tracing specifications.
+  #
+  # ESCAPE CLAUSE: No OpenTelemetry/Jaeger integration.
+  # Current: InMemoryTracingProvider for testing only.
+  # Requires: OpenTelemetry SDK, span exporters, trace context propagation.
   # Depends: None
   #
   # ESCAPE CLAUSE: No Prometheus/StatsD integration.
@@ -21,15 +25,12 @@ Feature: Observability
   # Requires: Integration with metrics collectors, configurable log levels.
   # Depends: Metrics registry integration
   #
-  # ESCAPE CLAUSE: log_context is a placeholder.
-  # Current: Context manager yields without adding context.
-  # Requires: structlog or similar for structured context propagation.
-  # Depends: None
+  # RESOLVED: Structured logging implemented via StructuredLogger class.
+  # StructuredLogger outputs JSON with context binding support.
+  # Use StructuredLogger(output=StringIO()) for testing, or output to stderr in production.
   #
-  # ESCAPE CLAUSE: InMemoryMetricsCollector doesn't persist.
-  # Current: All metrics lost on restart.
-  # Requires: Periodic flush to persistent storage or metrics backend.
-  # Depends: Prometheus/StatsD integration
+  # MOVED: InMemoryMetricsCollector scenarios moved to features/metrics_collector.feature
+  # See that file for testing-focused metrics collector specifications.
 
   # ===========================================================================
   # Logging Setup
@@ -48,14 +49,58 @@ Feature: Observability
     When I set up logging with name "my_app"
     Then the logger should have name "my_app"
 
-  # --- Logging Edge Cases (TODO: Implement) ---
+  # --- Logging Edge Cases ---
 
-  @wip
   Scenario: Logging with structured context
     Given structured logging is enabled
     When I log "Processing request" with context request_id "123" and user "alice"
     Then the log output should include "request_id": "123"
     And the log output should include "user": "alice"
+
+  Scenario: Bound context persists across multiple log calls
+    Given structured logging is enabled
+    When I bind context with request_id "REQ-456"
+    And I log "First message" at INFO level
+    And I log "Second message" at INFO level
+    Then both log entries should include "request_id": "REQ-456"
+
+  Scenario: Log level filtering respects minimum level
+    Given structured logging is enabled with level INFO
+    When I log "Debug message" at DEBUG level
+    And I log "Info message" at INFO level
+    Then the log output should contain 1 entry
+    And the log output should include "message": "Info message"
+
+  Scenario: Chained context binding accumulates context
+    Given structured logging is enabled
+    When I bind context with service "api"
+    And I bind additional context with request_id "789"
+    And I log "Chained context" at INFO level
+    Then the log output should include "service": "api"
+    And the log output should include "request_id": "789"
+
+  Scenario: All log levels produce correct output
+    Given structured logging is enabled
+    When I log "Debug msg" at DEBUG level
+    And I log "Info msg" at INFO level
+    And I log "Warning msg" at WARNING level
+    And I log "Error msg" at ERROR level
+    Then the log output should contain 4 entries
+    And the log should have entry with level "DEBUG" and message "Debug msg"
+    And the log should have entry with level "INFO" and message "Info msg"
+    And the log should have entry with level "WARNING" and message "Warning msg"
+    And the log should have entry with level "ERROR" and message "Error msg"
+
+  Scenario: Complex data types are serialized correctly
+    Given structured logging is enabled
+    When I log "Complex data" with nested context
+    Then the log output should be valid JSON
+    And the nested data should be preserved in the output
+
+  Scenario: Logger name appears in output
+    Given structured logging is enabled with name "my_service"
+    When I log "Test message" at INFO level
+    Then the log output should include "logger": "my_service"
 
   @wip
   Scenario: Logging to multiple handlers
@@ -200,74 +245,24 @@ Feature: Observability
     Then both collectors should have the metric
 
   # ===========================================================================
-  # In-Memory Metrics Collector
+  # Default Implementations
+  # Note: InMemoryMetricsCollector is now in features/metrics_collector.feature
   # ===========================================================================
 
-  Scenario: In-memory collector tracks counters
-    Given an in-memory collector for observability
-    When I increment "api_calls" by 5
-    And I increment "api_calls" by 3
-    Then the counter "api_calls" should be 8
-
-  Scenario: In-memory collector tracks gauges
-    Given an in-memory collector for observability
-    When I set gauge "queue_size" to 10
-    And I set gauge "queue_size" to 5
-    Then the gauge "queue_size" should be 5
-
-  Scenario: In-memory collector supports tags
-    Given an in-memory collector for observability
-    When I increment "requests" with tag "endpoint" = "users"
-    And I increment "requests" with tag "endpoint" = "orders"
-    Then both tagged metrics should be tracked
-
-  # --- In-Memory Collector Edge Cases (TODO: Implement) ---
-
-  # ESCAPE CLAUSE: No histogram bucketing.
-  # Current: Histograms stored as raw values list.
-  # Requires: Configurable buckets, automatic aggregation.
-  # Depends: None
-  @wip
-  Scenario: In-memory collector aggregates histogram buckets
-    Given an in-memory collector with histogram buckets [10, 50, 100, 500]
-    When I record histogram "response_time" with values 5, 25, 75, 200, 1000
-    Then bucket 10 should have count 1
-    And bucket 50 should have count 2
-    And bucket 100 should have count 3
-    And bucket 500 should have count 4
-    And bucket +Inf should have count 5
-
-  @wip
-  Scenario: In-memory collector computes histogram percentiles
-    Given an in-memory collector for observability
-    When I record histogram "latency" with 1000 values from normal distribution
-    Then I should be able to query p50, p90, p99 percentiles
-
-  @wip
-  Scenario: In-memory collector resets counters
-    Given an in-memory collector for observability
-    And counter "requests" with value 100
-    When I reset all metrics
-    Then the counter "requests" should be 0
-
-  # ===========================================================================
-  # Null Implementations
-  # ===========================================================================
-
-  Scenario: Null metrics collector accepts but discards metrics
-    Given a null metrics collector
+  Scenario: Default metrics collector stores metrics
+    Given a default metrics collector
     When I increment "anything" by 100
-    Then no error should occur
+    Then the counter "anything" should equal 100
 
-  Scenario: Null logger accepts but discards logs
-    Given a null logger
+  Scenario: Logger outputs structured JSON format
+    Given a logger configured for testing
     When I log "test message" at INFO level
-    Then no error should occur
+    Then the log should contain the message as structured JSON
 
-  Scenario: Null tracing provider creates null spans
-    Given a null tracing provider
-    When I start a span "test_operation"
-    Then a null span should be returned
+  Scenario: Default tracing provider creates spans
+    Given a default tracing provider
+    When I start a span "test_operation" for observability
+    Then an in-memory span should be returned
 
   # ===========================================================================
   # Distributed Tracing (TODO: Implement)

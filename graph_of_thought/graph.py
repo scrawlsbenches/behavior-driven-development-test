@@ -38,9 +38,9 @@ from .core.defaults import (
     FunctionGenerator,
     FunctionEvaluator,
     ConstantEvaluator,
-    NullMetricsCollector,
-    NullLogger,
-    NullTracingProvider,
+    InMemoryMetricsCollector,
+    StructuredLogger,
+    InMemoryTracingProvider,
     SimpleResourceLimiter,
     SimpleEventEmitter,
 )
@@ -155,9 +155,9 @@ class GraphOfThought(Generic[T]):
         
         # Pluggable components (use null implementations if not provided)
         self._persistence = persistence
-        self._metrics = metrics or NullMetricsCollector()
-        self._logger = logger or NullLogger()
-        self._tracer = tracer or NullTracingProvider()
+        self._metrics = metrics or InMemoryMetricsCollector()
+        self._logger = logger or StructuredLogger("graph_of_thought")
+        self._tracer = tracer or InMemoryTracingProvider()
         self._resource_limiter = resource_limiter or SimpleResourceLimiter()
         self._event_emitter: EventEmitter[T] = event_emitter or SimpleEventEmitter()
         

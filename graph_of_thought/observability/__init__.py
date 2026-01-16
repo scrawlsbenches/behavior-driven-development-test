@@ -13,26 +13,26 @@ from contextlib import contextmanager
 from functools import wraps
 
 from ..core.defaults import (
-    NullMetricsCollector,
     InMemoryMetricsCollector,
     StandardLogger,
-    NullLogger,
-    NullTracingProvider,
-    NullTraceSpan,
+    StructuredLogger,
+    InMemoryTracingProvider,
+    InMemoryTraceSpan,
 )
 
 
 # Re-export defaults
 __all__ = [
-    "NullMetricsCollector",
     "InMemoryMetricsCollector",
     "StandardLogger",
-    "NullLogger",
-    "NullTracingProvider",
-    "NullTraceSpan",
+    "StructuredLogger",
+    "InMemoryTracingProvider",
+    "InMemoryTraceSpan",
     "setup_logging",
     "timed",
     "counted",
+    "log_context",
+    "MetricsRegistry",
 ]
 
 
