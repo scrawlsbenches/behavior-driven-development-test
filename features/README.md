@@ -32,7 +32,7 @@ features/
 │   ├── observability.feature         # Logging, metrics, tracing (@mvp-p1)
 │   └── data_persistence.feature      # Storage, backup, recovery (@mvp-p0)
 │
-└── steps/                         # Step definitions (to be implemented)
+└── steps/                         # Step definitions (11 files, 4,055 lines)
     └── *.py
 ```
 
@@ -133,10 +133,10 @@ Feature: Business Capability Name
 
 ## Legacy Features
 
-The original technical feature files remain in the `features/` root for reference:
-- `basic_operations.feature`, `search.feature`, etc.
+The original 25 technical feature files remain in the `features/` root directory:
+- `basic_operations.feature`, `governance.feature`, `search.feature`, etc.
 
-These will be deprecated once the new business-focused features have complete step definition coverage.
+**Status**: These legacy files use the generic "developer" persona and technical focus. The new enterprise-focused features in subdirectories provide business-aligned alternatives. Legacy files are maintained for backward compatibility with existing step definitions but are considered deprecated in favor of the new structure.
 
 ## Contributing
 

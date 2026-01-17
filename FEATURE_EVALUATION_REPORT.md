@@ -1,9 +1,20 @@
 # Feature Files Enterprise Quality Evaluation Report
 
+> **NOTE**: This report evaluates the original technical feature files only.
+> An enterprise restructuring added 10 new business-focused feature files in:
+> `features/ai_reasoning/`, `features/governance_compliance/`, `features/cost_management/`,
+> `features/knowledge_management/`, `features/project_management/`, and `features/platform/`.
+>
+> **Current totals**: 35 feature files (10 enterprise + 25 legacy)
+>
+> The new enterprise features implement the improvements recommended in FEATURE_FILE_REVIEW.md.
+
+---
+
 **Project:** Graph of Thought - BDD Test Suite
 **Framework:** Behave (Python)
 **Evaluation Date:** 2026-01-16
-**Feature Files Reviewed:** 21 files, 2,456 total lines
+**Feature Files Reviewed:** 21 files, 2,456 total lines (legacy features only)
 **Total Scenarios:** 135 implemented + 64 @wip (edge cases)
 
 ---
