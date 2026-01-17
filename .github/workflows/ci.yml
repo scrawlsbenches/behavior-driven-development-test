@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  architecture:
+    name: Architecture Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check Architecture
+        run: python scripts/check_architecture.py
+
+  tests:
+    name: BDD Tests
+    runs-on: ubuntu-latest
+    needs: architecture  # Only run if architecture passes
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Run BDD tests (MVP-P0)
+        run: behave --tags=@mvp-p0
+
+      - name: Run all MVP tests
+        run: behave --tags="@mvp-p0 or @mvp-p1 or @mvp-p2"
