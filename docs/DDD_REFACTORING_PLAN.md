@@ -66,45 +66,44 @@ graph_of_thought/
 - [x] Create `__init__.py` files
 
 ### Step 2: Extract and consolidate enums
-- [ ] Move `ThoughtStatus` from `core/types.py`
-- [ ] Move `ApprovalStatus`, `Priority`, `ResourceType` from `services/protocols.py`
-- [ ] Consolidate duplicate enums from step files
-- [ ] Create re-exports in `domain/enums/__init__.py`
+- [x] Move `ThoughtStatus` from `core/types.py`
+- [x] Move `ApprovalStatus`, `Priority`, `ResourceType` from `services/protocols.py`
+- [x] Consolidate duplicate enums from step files
+- [x] Create re-exports in `domain/enums/__init__.py`
 
 ### Step 3: Extract and consolidate models
-- [ ] Move `Thought`, `Edge`, `SearchResult`, `SearchContext` from `core/types.py`
-- [ ] Move `Decision`, `KnowledgeEntry`, `QuestionTicket`, `HandoffPackage`, `ResourceBudget` from `services/protocols.py`
-- [ ] Consolidate `User`, `WorkChunk`, `Budget`, etc. from step files
-- [ ] Create re-exports in `domain/models/__init__.py`
+- [x] Move `Thought`, `Edge`, `SearchResult`, `SearchContext` from `core/types.py`
+- [x] Move `Decision`, `KnowledgeEntry`, `QuestionTicket`, `HandoffPackage`, `ResourceBudget` from `services/protocols.py`
+- [x] Consolidate `User`, `WorkChunk`, `Budget`, etc. from step files (kept BDD-specific models, shared enums)
+- [x] Create re-exports in `domain/models/__init__.py`
 
 ### Step 4: Update core/ imports
-- [ ] Update `core/types.py` to import from domain (or re-export for backwards compatibility)
-- [ ] Update `core/protocols.py` if needed
+- [x] Update `core/types.py` to import from domain (re-exports for backwards compatibility)
+- [x] `core/protocols.py` unchanged (no domain model dependencies)
 
 ### Step 5: Update services/ imports
-- [ ] Update `services/protocols.py` to import models from domain
-- [ ] Keep service protocols in `services/protocols.py`
+- [x] Update `services/protocols.py` to import models from domain
+- [x] Keep service protocols in `services/protocols.py`
 
 ### Step 6: Split implementations.py
-- [ ] Create `services/implementations/` directory
-- [ ] Extract governance implementations
-- [ ] Extract knowledge implementations
-- [ ] Extract project implementations
-- [ ] Extract resource implementations
-- [ ] Extract communication implementations
-- [ ] Update `services/implementations/__init__.py` with re-exports
+- [x] Create `services/implementations/` directory
+- [x] Extract governance implementations
+- [x] Extract knowledge implementations
+- [x] Extract project implementations
+- [x] Extract resource implementations
+- [x] Extract communication implementations
+- [x] Update `services/implementations/__init__.py` with re-exports
 
 ### Step 7: Update step files
-- [ ] Remove local model definitions from `knowledge_management_steps.py`
-- [ ] Remove local model definitions from `cost_management_steps.py`
-- [ ] Remove local model definitions from `project_management_steps.py`
-- [ ] Remove local model definitions from `governance_steps.py`
-- [ ] Update imports to use `from graph_of_thought.domain import ...`
+- [x] Update `knowledge_management_steps.py` to import enums from domain
+- [x] Update `project_management_steps.py` to import ChunkStatus from domain
+- [x] `cost_management_steps.py` - kept local enums (different meanings)
+- [x] `governance_steps.py` - kept local enums (different values)
 
 ### Step 8: Update architecture tests
 - [ ] Add tests for domain model locations
 - [ ] Update `check_architecture.py` script
-- [ ] Verify all tests pass
+- [x] Verify all tests pass
 
 ## Import Hierarchy
 
