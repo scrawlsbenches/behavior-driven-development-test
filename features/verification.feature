@@ -2,51 +2,32 @@
 Feature: In-Memory Verification Provider
   As a developer testing Graph of Thought
   I want an in-memory verification provider
-  So that I can verify thought validation behavior in tests without external dependencies
+  So that I can test thought validation behavior without waiting for external LLM services
 
-  # ===========================================================================
-  # FEATURE-LEVEL ESCAPE CLAUSES
-  # ===========================================================================
-  # ESCAPE CLAUSE: No LLM-based verification.
-  # Current: InMemoryVerifier uses configurable rules for testing.
-  # Requires: LLM integration, prompt templates, response parsing.
-  # Depends: LLM provider integration
-  #
-  # ESCAPE CLAUSE: No external fact-checking integration.
-  # Current: Verification results are manually configured or rule-based.
-  # Requires: External API integration, caching, rate limiting.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No async verification pipelines.
-  # Current: Single synchronous verification per call.
-  # Requires: Pipeline orchestration, parallel verification strategies.
-  # Depends: None
+  Background:
+    Given an in-memory verifier
 
   # ===========================================================================
   # Basic Verification
   # ===========================================================================
 
-  Scenario: Creating a verifier with default pass behavior
-    Given an in-memory verifier
+  Scenario: Verifier passes content by default
     When I verify content "test content"
     Then the verifier result should pass
     And the verifier result confidence should be 1.0
 
   Scenario: Verifier tracks verification calls
-    Given an in-memory verifier
     When I verify content "first"
     And I verify content "second"
     Then the verifier should have 2 verification calls
 
   Scenario: Verification result includes no issues by default
-    Given an in-memory verifier
     When I verify content "valid content"
     Then the verifier result should have 0 issues
 
   # ===========================================================================
-  # Configurable Results (Scenario Outline)
+  # Configurable Results
   # ===========================================================================
-  # Consolidated from separate scenarios for fail mode, confidence, issues, metadata.
 
   Scenario Outline: Configuring verifier with <config_type>
     Given an in-memory verifier <configuration>
@@ -72,12 +53,10 @@ Feature: In-Memory Verification Provider
     And the verifier result metadata should have "verified_at" with value "2024-01-15"
 
   # ===========================================================================
-  # Content-Based Rules (Scenario Outline)
+  # Content-Based Rules
   # ===========================================================================
-  # Consolidated from separate matching and non-matching scenarios.
 
   Scenario Outline: Validation rule rejects content containing "<reject_word>" - <case>
-    Given an in-memory verifier
     And a rule that rejects content containing "<reject_word>"
     When I verify content "<test_content>"
     Then the verifier result should <expected_result>
@@ -89,15 +68,13 @@ Feature: In-Memory Verification Provider
     | spam        | this is spam content | matching      | fail            |
     | spam        | this is valid        | non-matching  | pass            |
 
-  Scenario: Multiple rules are evaluated
-    Given an in-memory verifier
+  Scenario: Multiple rules are all evaluated
     And a rule that rejects content containing "spam"
     And a rule that rejects content containing "invalid"
     When I verify content "this is spam content"
     Then the verifier result should fail
 
   Scenario: All rules must pass for verification to succeed
-    Given an in-memory verifier
     And a rule that rejects content containing "spam"
     And a rule that rejects content containing "invalid"
     When I verify content "this is valid content"
@@ -108,14 +85,12 @@ Feature: In-Memory Verification Provider
   # ===========================================================================
 
   Scenario: Querying verification history
-    Given an in-memory verifier
     When I verify content "first content"
     And I verify content "second content"
     Then I should be able to get verification history
     And the history should contain 2 entries
 
   Scenario: Verification history includes content
-    Given an in-memory verifier
     When I verify content "tracked content"
     Then the last verification should have content "tracked content"
 
@@ -125,7 +100,6 @@ Feature: In-Memory Verification Provider
     Then the last verification should have result is_valid=False
 
   Scenario: Verification history includes timestamp
-    Given an in-memory verifier
     When I verify content "timed content"
     Then the last verification should have a timestamp
 
@@ -134,7 +108,6 @@ Feature: In-Memory Verification Provider
   # ===========================================================================
 
   Scenario: Resetting the verifier clears history
-    Given an in-memory verifier
     When I verify content "content 1"
     And I verify content "content 2"
     And I reset the verifier
@@ -153,27 +126,27 @@ Feature: In-Memory Verification Provider
   # ===========================================================================
 
   Scenario: Verifying empty content
-    Given an in-memory verifier
     When I verify content ""
     Then the verifier result should pass
 
-  Scenario: Verifying None content
-    Given an in-memory verifier
+  Scenario: Verifying null content
     When I verify None content
     Then the verifier result should pass
 
   Scenario: Verification with context is tracked
-    Given an in-memory verifier
     When I verify content "test" with context depth=3
     Then the last verification should have context with depth 3
 
   Scenario: Sequential verifications maintain separate results
-    Given an in-memory verifier
     And a rule that rejects content containing "bad"
     When I verify content "good content"
     And I verify content "bad content"
     And I verify content "another good"
     Then the verification history should show pass, fail, pass
+
+  # ===========================================================================
+  # Future Capabilities
+  # ===========================================================================
 
   @wip
   Scenario: Async verification pipeline
@@ -187,3 +160,20 @@ Feature: In-Memory Verification Provider
     When I verify the same content twice
     Then the second verification should use cached result
     And only 1 actual verification should occur
+
+  # ===========================================================================
+  # Known Limitations (Escape Clauses)
+  # ===========================================================================
+  # These document current limitations and what would be needed to address them.
+  #
+  # ESCAPE CLAUSE: No LLM-based verification.
+  # Current: InMemoryVerifier uses configurable rules for testing.
+  # Requires: LLM integration, prompt templates, response parsing.
+  #
+  # ESCAPE CLAUSE: No external fact-checking integration.
+  # Current: Verification results are manually configured or rule-based.
+  # Requires: External API integration, caching, rate limiting.
+  #
+  # ESCAPE CLAUSE: No async verification pipelines.
+  # Current: Single synchronous verification per call.
+  # Requires: Pipeline orchestration, parallel verification strategies.

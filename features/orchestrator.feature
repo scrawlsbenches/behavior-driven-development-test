@@ -31,7 +31,7 @@ Feature: Service Orchestrator
   # Orchestrator Setup
   # ===========================================================================
 
-  Scenario: Creating orchestrator with null services
+  Scenario: Creating orchestrator with default services
     Given a default orchestrator
     Then the orchestrator should have governance service
     And the orchestrator should have resource service
