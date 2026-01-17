@@ -16,7 +16,7 @@ use_step_matcher("parse")
 # Persistence Setup Steps
 # =============================================================================
 
-@given("an in-memory persistence backend")
+@given("a in-memory persistence backend")
 def step_in_memory_persistence(context):
     context.persistence = InMemoryPersistence()
 
