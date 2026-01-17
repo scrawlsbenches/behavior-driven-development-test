@@ -41,6 +41,8 @@ Remember: Good BDD is about shared understanding first, automation second. Help 
 
 # CLAUDE.md - Behave BDD Guide for Graph of Thought
 
+> **Quick Start:** Run `./scripts/setup-dev.sh` after cloning to configure git hooks and dependencies.
+
 This document establishes BDD practices using the **behave** framework for the Graph of Thought enterprise application. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
 
 ## Project Overview
