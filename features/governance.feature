@@ -4,11 +4,21 @@ Feature: Governance Service
   I want a governance service to manage approvals and policies
   So that I can control what actions are allowed in my application
 
-  # The governance service handles approval workflows, audit trails,
-  # and policy enforcement for your application.
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # This feature tests TWO implementations:
+  #
+  # 1. IN-MEMORY GOVERNANCE SERVICE (test double)
+  #    - Auto-approves everything
+  #    - Use when you need isolated tests without governance logic
+  #
+  # 2. SIMPLE GOVERNANCE SERVICE (lightweight implementation)
+  #    - Enforces policies, records audits, manages approvals
+  #    - Use when testing actual governance behavior
 
   # ===========================================================================
-  # In-Memory Governance Service (For Testing)
+  # In-Memory Governance Service (Test Double)
   # ===========================================================================
 
   Scenario: In-memory governance service auto-approves all actions

@@ -28,3 +28,31 @@ Feature: Configuration
     When I serialize the config to JSON
     And I deserialize the config from JSON
     Then the restored config should have max_depth 25
+
+  # ===========================================================================
+  # Edge Cases and Validation (TODO: Implement step definitions)
+  # ===========================================================================
+
+  @wip
+  Scenario: Config with zero max_depth is invalid
+    Given a config with max_depth 0
+    When I validate the config
+    Then there should be at least 1 validation issue
+    And the issue should mention "max_depth"
+
+  @wip
+  Scenario: Config with extremely large values is accepted
+    Given a configuration dictionary with:
+      | key          | value     |
+      | max_depth    | 1000000   |
+      | max_thoughts | 10000000  |
+    When I create a config from the dictionary
+    Then the config should have max_depth 1000000
+
+  @wip
+  Scenario: Missing required fields use defaults
+    Given an empty configuration dictionary
+    When I create a config from the dictionary
+    Then the config should have default values
+    And max_depth should be greater than 0
+    And max_thoughts should be greater than 0

@@ -38,4 +38,4 @@ Feature: Search Algorithms
     Given a graph with max depth 10
     And a thought "Start" exists
     When I run beam search with max expansions 5
-    Then the search should have expanded at most 10 thoughts
+    Then the search should have expanded at most 5 thoughts

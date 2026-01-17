@@ -8,37 +8,35 @@ Feature: Question Service
   # answering, and priority management. Questions can be routed to teams
   # based on keywords or auto-answered from a knowledge base.
 
+  Background:
+    Given a simple question service
+
   # ===========================================================================
-  # Simple Question Service
+  # Question Lifecycle
   # ===========================================================================
 
   Scenario: Question service creates tickets with status and priority
-    Given a simple question service
     When I ask a question "Should we use GraphQL?" with priority "HIGH"
     Then a question ticket should be created
     And the ticket should have status "open"
     And the ticket should have priority "HIGH"
 
   Scenario: Question service routes questions to security team
-    Given a simple question service
     When I ask a question "What are the security requirements?"
     Then the question should be routed to "security-team"
 
   Scenario: Question service routes business questions to product owner
-    Given a simple question service
     When I ask a question "Should we add this feature?"
     Then the question should be routed to "product-owner"
 
   Scenario: Question service records answers from experts
-    Given a simple question service
-    And a pending question "What database?"
+    Given a pending question "What database?"
     When I provide answer "PostgreSQL" from "architect"
     Then the ticket should have status "answered"
     And the ticket should have answer "PostgreSQL"
 
   Scenario: Question service returns pending questions by priority
-    Given a simple question service
-    And a question "Low priority question" with priority "LOW"
+    Given a question "Low priority question" with priority "LOW"
     And a question "Critical question" with priority "CRITICAL"
     When I get pending questions
     Then the first question should have priority "CRITICAL"
@@ -49,8 +47,7 @@ Feature: Question Service
 
   @wip
   Scenario: Question service auto-answers from knowledge base
-    Given a simple question service
-    And a knowledge base with entry "We use PostgreSQL for all projects"
+    Given a knowledge base with entry "We use PostgreSQL for all projects"
     When I ask a question "What database do we use?"
     And the confidence threshold is 0.8
     Then the question should be auto-answered
@@ -59,16 +56,14 @@ Feature: Question Service
 
   @wip
   Scenario: Question service detects duplicate questions
-    Given a simple question service
-    And a previously answered question "What database should we use?"
+    Given a previously answered question "What database should we use?"
     When I ask a question "Which database should we use?"
     Then the service should suggest the existing answer
     And offer to create a new ticket if unsatisfied
 
   @wip
   Scenario: Question service tracks SLA compliance
-    Given a simple question service
-    And an SLA of 4 hours for HIGH priority questions
+    Given an SLA of 4 hours for HIGH priority questions
     And a HIGH priority question asked 5 hours ago without answer
     When I check SLA compliance
     Then the question should be flagged as SLA violation

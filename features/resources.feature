@@ -4,11 +4,21 @@ Feature: Resource Service
   I want a resource service to manage budgets and consumption
   So that I can track and control resource usage in my projects
 
-  # The resource service tracks token budgets, consumption history,
-  # and helps ensure projects stay within their allocated resources.
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # This feature tests TWO implementations:
+  #
+  # 1. IN-MEMORY RESOURCE SERVICE (test double)
+  #    - Returns unlimited resources for any project
+  #    - Use when you need isolated tests without resource tracking
+  #
+  # 2. SIMPLE RESOURCE SERVICE (lightweight implementation)
+  #    - Tracks budgets, consumption, and enforces limits
+  #    - Use when testing actual resource management behavior
 
   # ===========================================================================
-  # In-Memory Resource Service (For Testing)
+  # In-Memory Resource Service (Test Double)
   # ===========================================================================
 
   Scenario: In-memory resource service has unlimited resources

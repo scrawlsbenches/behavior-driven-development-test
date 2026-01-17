@@ -4,11 +4,21 @@ Feature: Knowledge Service
   I want a knowledge service to store and retrieve information
   So that I can build applications that learn from past decisions
 
-  # The knowledge service stores knowledge entries and architectural decisions,
-  # enabling retrieval based on keyword matching or semantic similarity.
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # This feature tests TWO implementations:
+  #
+  # 1. IN-MEMORY KNOWLEDGE SERVICE (test double)
+  #    - Stores entries but retrieval always returns empty
+  #    - Use when you need isolated tests without knowledge lookup
+  #
+  # 2. SIMPLE KNOWLEDGE SERVICE (lightweight implementation)
+  #    - Stores and retrieves entries using keyword matching
+  #    - Use when testing actual knowledge storage behavior
 
   # ===========================================================================
-  # In-Memory Knowledge Service (For Testing)
+  # In-Memory Knowledge Service (Test Double)
   # ===========================================================================
 
   Scenario: In-memory knowledge service stores entries without retrieval

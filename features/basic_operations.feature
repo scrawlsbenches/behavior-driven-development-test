@@ -60,3 +60,33 @@ Feature: Basic Graph Operations
     Given a thought "Test" exists
     Then "Test" should be in the graph
     And "nonexistent" should not be in the graph
+
+  # ===========================================================================
+  # Edge Cases (TODO: Implement step definitions)
+  # ===========================================================================
+
+  @wip
+  Scenario: Adding thought with empty content
+    When I add a thought with content ""
+    Then the graph should contain 1 thought
+    And the thought should have empty content
+
+  @wip
+  Scenario: Adding edge to nonexistent thought raises error
+    Given a thought "Source" exists
+    When I try to add an edge from "Source" to "nonexistent"
+    Then a NodeNotFoundError should be raised
+
+  @wip
+  Scenario: Removing nonexistent thought raises error
+    When I try to remove thought "nonexistent"
+    Then a NodeNotFoundError should be raised
+
+  @wip
+  Scenario: Adding duplicate edge replaces existing edge
+    Given a thought "T1" exists
+    And a thought "T2" exists as child of "T1"
+    When I add an edge from "T1" to "T2" with relation "updated" and weight 0.9
+    Then the edge from "T1" to "T2" should have relation "updated"
+    And the edge from "T1" to "T2" should have weight 0.9
+    And there should be exactly 1 edge from "T1" to "T2"

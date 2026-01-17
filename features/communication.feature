@@ -8,25 +8,25 @@ Feature: Communication Service
   # tracks intent history, records feedback, and manages context compression
   # for efficient resumption of work.
 
+  Background:
+    Given a simple communication service
+
   # ===========================================================================
-  # Simple Communication Service
+  # Handoff Management
   # ===========================================================================
 
   Scenario: Communication service creates handoff packages
-    Given a simple communication service
     When I create a handoff for project "test_project" of type "ai_to_human"
     Then a handoff package should be created
     And the handoff should have type "ai_to_human"
 
   Scenario: Communication service records and retrieves intent
-    Given a simple communication service
     When I record intent "Implement user authentication" for project "test_project"
     And I get resumption context for project "test_project"
     Then the context should contain "Implement user authentication"
 
   Scenario: Communication service compresses long history
-    Given a simple communication service
-    And a recorded intent "Build the API" for project "test_project"
+    Given a recorded intent "Build the API" for project "test_project"
     When I compress history for project "test_project" with max tokens 100
     Then the compressed history should not exceed 400 characters
 
@@ -36,15 +36,13 @@ Feature: Communication Service
 
   @wip
   Scenario: Communication service includes attachments in handoff
-    Given a simple communication service
-    And a file "architecture.png" attached to project "test_project"
+    Given a file "architecture.png" attached to project "test_project"
     When I create a handoff for project "test_project" of type "ai_to_human"
     Then the handoff should include attachment "architecture.png"
 
   @wip
   Scenario: Communication service summarizes history intelligently
-    Given a simple communication service
-    And project "test_project" with 50 recorded intents
+    Given project "test_project" with 50 recorded intents
     When I compress history for project "test_project" with max tokens 100
     Then the summary should mention key decisions made
     And the summary should mention current blockers
@@ -52,8 +50,7 @@ Feature: Communication Service
 
   @wip
   Scenario: Communication service analyzes feedback patterns
-    Given a simple communication service
-    And 10 negative feedback entries mentioning "slow response"
+    Given 10 negative feedback entries mentioning "slow response"
     When I request a feedback analysis
     Then the analysis should identify "slow response" as a pattern
     And suggest improvements for response time
@@ -69,16 +66,14 @@ Feature: Communication Service
 
   @wip
   Scenario: Communication service includes thread history in handoff
-    Given a simple communication service
-    And a conversation thread with 5 messages for project "test_project"
+    Given a conversation thread with 5 messages for project "test_project"
     When I create a handoff for project "test_project" of type "ai_to_human"
     Then the handoff should include the conversation thread
     And messages should be in chronological order
 
   @wip
   Scenario: Communication service includes action items in handoff
-    Given a simple communication service
-    And pending action items for project "test_project":
+    Given pending action items for project "test_project":
       | item                    | assignee |
       | Review PR #123          | alice    |
       | Update documentation    | bob      |
