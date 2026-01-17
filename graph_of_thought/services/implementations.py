@@ -622,7 +622,8 @@ class InMemoryProjectManagementService:
         """
         Get projected timeline for a project.
 
-        Returns basic timeline info based on ready items.
+        Returns timeline info based on ready items and historical estimate data.
+        Uses recorded estimates to calculate accuracy metrics.
         """
         project = self._projects.get(project_id)
         if not project:
@@ -635,13 +636,276 @@ class InMemoryProjectManagementService:
             item.get("estimated_hours", 1.0) for item in ready
         )
 
+        # Calculate estimate accuracy from historical data
+        accuracy_data = self._calculate_estimate_accuracy(project_id)
+
         return {
             "project_id": project_id,
             "project_name": project.get("name", ""),
             "ready_item_count": len(ready),
             "blocked_item_count": len(blocked),
             "total_estimated_hours": total_estimated,
+            "adjusted_estimated_hours": total_estimated * accuracy_data.get("adjustment_factor", 1.0),
+            "estimate_accuracy": accuracy_data,
         }
+
+    def _calculate_estimate_accuracy(self, project_id: str) -> dict[str, Any]:
+        """
+        Calculate estimate accuracy metrics based on recorded actual times.
+
+        Returns dict with:
+        - items_with_actuals: Number of items that have actual time recorded
+        - average_ratio: Average of (actual / estimated) for completed items
+        - adjustment_factor: Suggested multiplier for future estimates
+        """
+        items_with_actuals = 0
+        ratios = []
+
+        # Get all items for this project
+        all_ready = self._ready_items.get(project_id, [])
+        all_blocked = self._blocked_items.get(project_id, [])
+        all_items = all_ready + all_blocked
+
+        for item in all_items:
+            item_id = item.get("id")
+            if item_id and item_id in self._estimates:
+                estimate_data = self._estimates[item_id]
+                actual = estimate_data.get("actual_hours", 0)
+                estimated = item.get("estimated_hours", 1.0)
+                if actual > 0 and estimated > 0:
+                    ratios.append(actual / estimated)
+                    items_with_actuals += 1
+
+        if not ratios:
+            return {
+                "items_with_actuals": 0,
+                "average_ratio": 1.0,
+                "adjustment_factor": 1.0,
+            }
+
+        average_ratio = sum(ratios) / len(ratios)
+
+        return {
+            "items_with_actuals": items_with_actuals,
+            "average_ratio": round(average_ratio, 2),
+            "adjustment_factor": round(average_ratio, 2),
+        }
+
+    # =========================================================================
+    # State Transition Methods
+    # =========================================================================
+
+    def move_to_blocked(
+        self,
+        project_id: str,
+        item_id: str,
+        blocked_reason: str,
+    ) -> bool:
+        """
+        Move an item from ready to blocked state.
+
+        Args:
+            project_id: The project the item belongs to
+            item_id: The ID of the item to move
+            blocked_reason: Reason why the item is now blocked
+
+        Returns:
+            True if item was moved, False if item not found
+        """
+        ready_items = self._ready_items.get(project_id, [])
+
+        for i, item in enumerate(ready_items):
+            if item.get("id") == item_id:
+                # Remove from ready list
+                moved_item = ready_items.pop(i)
+                # Add blocked reason and move to blocked list
+                moved_item["blocked_reason"] = blocked_reason
+                moved_item["blocked_at"] = datetime.now().isoformat()
+                self.add_blocked_item(project_id, moved_item)
+                return True
+
+        return False
+
+    def move_to_ready(
+        self,
+        project_id: str,
+        item_id: str,
+        unblock_notes: str = "",
+    ) -> bool:
+        """
+        Move an item from blocked to ready state.
+
+        Args:
+            project_id: The project the item belongs to
+            item_id: The ID of the item to move
+            unblock_notes: Optional notes about how the blocker was resolved
+
+        Returns:
+            True if item was moved, False if item not found
+        """
+        blocked_items = self._blocked_items.get(project_id, [])
+
+        for i, item in enumerate(blocked_items):
+            if item.get("id") == item_id:
+                # Remove from blocked list
+                moved_item = blocked_items.pop(i)
+                # Remove blocked metadata and add unblock notes
+                moved_item.pop("blocked_reason", None)
+                moved_item.pop("blocked_at", None)
+                if unblock_notes:
+                    moved_item["unblock_notes"] = unblock_notes
+                moved_item["unblocked_at"] = datetime.now().isoformat()
+                self.add_ready_item(project_id, moved_item)
+                return True
+
+        return False
+
+    def update_item_priority(
+        self,
+        project_id: str,
+        item_id: str,
+        new_priority: str,
+    ) -> bool:
+        """
+        Update the priority of an item.
+
+        Args:
+            project_id: The project the item belongs to
+            item_id: The ID of the item to update
+            new_priority: New priority value (e.g., "CRITICAL", "HIGH", "MEDIUM", "LOW")
+
+        Returns:
+            True if item was updated, False if not found
+        """
+        # Check ready items
+        for item in self._ready_items.get(project_id, []):
+            if item.get("id") == item_id:
+                item["priority"] = new_priority
+                return True
+
+        # Check blocked items
+        for item in self._blocked_items.get(project_id, []):
+            if item.get("id") == item_id:
+                item["priority"] = new_priority
+                return True
+
+        return False
+
+    # =========================================================================
+    # Query Methods for Test Assertions
+    # =========================================================================
+
+    def get_item_by_id(self, item_id: str) -> dict[str, Any] | None:
+        """
+        Get an item by its ID, searching across all projects and states.
+
+        Args:
+            item_id: The item ID to look up
+
+        Returns:
+            The item dict if found, None otherwise
+        """
+        # Search in ready items
+        for items in self._ready_items.values():
+            for item in items:
+                if item.get("id") == item_id:
+                    return item
+
+        # Search in blocked items
+        for items in self._blocked_items.values():
+            for item in items:
+                if item.get("id") == item_id:
+                    return item
+
+        return None
+
+    def get_items_by_priority(
+        self,
+        priority: str,
+        project_id: str | None = None,
+        include_blocked: bool = False,
+    ) -> list[dict[str, Any]]:
+        """
+        Get all items with a specific priority.
+
+        Args:
+            priority: The priority to filter by (e.g., "CRITICAL", "HIGH")
+            project_id: Optional filter to specific project
+            include_blocked: Whether to include blocked items (default: False)
+
+        Returns:
+            List of items matching the priority filter
+        """
+        priority_upper = priority.upper()
+        results = []
+
+        # Get ready items
+        if project_id:
+            ready = self._ready_items.get(project_id, [])
+        else:
+            ready = []
+            for items in self._ready_items.values():
+                ready.extend(items)
+
+        for item in ready:
+            item_priority = str(item.get("priority", "MEDIUM")).upper()
+            if item_priority == priority_upper:
+                results.append(item)
+
+        # Optionally include blocked items
+        if include_blocked:
+            if project_id:
+                blocked = self._blocked_items.get(project_id, [])
+            else:
+                blocked = []
+                for items in self._blocked_items.values():
+                    blocked.extend(items)
+
+            for item in blocked:
+                item_priority = str(item.get("priority", "MEDIUM")).upper()
+                if item_priority == priority_upper:
+                    results.append(item)
+
+        return results
+
+    def get_project_by_id(self, project_id: str) -> dict[str, Any] | None:
+        """
+        Get a project by its ID.
+
+        Args:
+            project_id: The project ID to look up
+
+        Returns:
+            The project dict if found, None otherwise
+        """
+        return self._projects.get(project_id)
+
+    def get_estimate_history(self, item_id: str) -> dict[str, Any] | None:
+        """
+        Get the estimate history for an item.
+
+        Args:
+            item_id: The item ID to look up
+
+        Returns:
+            The estimate data if found, None otherwise
+        """
+        return self._estimates.get(item_id)
+
+    @property
+    def total_item_count(self) -> int:
+        """Get the total number of items across all projects and states."""
+        count = 0
+        for items in self._ready_items.values():
+            count += len(items)
+        for items in self._blocked_items.values():
+            count += len(items)
+        return count
+
+    @property
+    def project_count(self) -> int:
+        """Get the total number of projects."""
+        return len(self._projects)
 
 
 class InMemoryResourceService:
@@ -1118,10 +1382,92 @@ class InMemoryKnowledgeService:
         """
         Find past decisions that might contradict a proposed decision.
 
-        NOTE: This is a placeholder implementation that returns empty list.
-        Real contradiction detection would require semantic understanding.
+        Uses keyword-based contradiction detection by looking for:
+        1. Decisions with overlapping topic keywords
+        2. Decisions with opposite sentiment indicators (e.g., "use X" vs "avoid X")
+
+        Args:
+            proposed_decision: The proposed decision text to check
+            project_id: Optional filter to only check decisions from a specific project
+
+        Returns:
+            List of potentially contradicting decisions, ordered by relevance
         """
-        return []
+        if not proposed_decision:
+            return []
+
+        # Extract keywords from proposed decision
+        proposed_lower = proposed_decision.lower()
+        proposed_words = set(proposed_lower.split())
+
+        # Contradiction indicators - pairs of opposite terms
+        contradiction_pairs = [
+            ("use", "avoid"),
+            ("enable", "disable"),
+            ("add", "remove"),
+            ("include", "exclude"),
+            ("allow", "deny"),
+            ("approve", "reject"),
+            ("start", "stop"),
+            ("create", "delete"),
+            ("sync", "async"),
+            ("monolith", "microservice"),
+        ]
+
+        contradictions: list[tuple[float, Decision]] = []
+
+        for decision in self._decisions.values():
+            # Filter by project if specified
+            if project_id and decision.project_id != project_id:
+                continue
+
+            decision_text = f"{decision.title} {decision.context} {decision.chosen} {decision.rationale}".lower()
+            decision_words = set(decision_text.split())
+
+            # Calculate topic overlap score
+            common_words = proposed_words & decision_words
+            # Filter out common stop words
+            stop_words = {"the", "a", "an", "is", "are", "was", "were", "be", "been",
+                         "being", "have", "has", "had", "do", "does", "did", "will",
+                         "would", "could", "should", "may", "might", "must", "shall",
+                         "to", "of", "in", "for", "on", "with", "at", "by", "from",
+                         "as", "into", "through", "during", "before", "after", "above",
+                         "below", "between", "under", "again", "further", "then", "once",
+                         "and", "or", "but", "if", "because", "until", "while", "although",
+                         "this", "that", "these", "those", "it", "its", "we", "they"}
+            meaningful_common = common_words - stop_words
+
+            if not meaningful_common:
+                continue
+
+            topic_score = len(meaningful_common)
+
+            # Check for contradiction patterns
+            contradiction_score = 0.0
+            for word1, word2 in contradiction_pairs:
+                # Check if proposed has word1 and decision has word2 (or vice versa)
+                if (word1 in proposed_lower and word2 in decision_text) or \
+                   (word2 in proposed_lower and word1 in decision_text):
+                    contradiction_score += 2.0
+
+            # Check for negation patterns
+            negation_words = ["not", "no", "never", "without", "don't", "doesn't", "won't", "can't"]
+            proposed_has_negation = any(neg in proposed_lower for neg in negation_words)
+            decision_has_negation = any(neg in decision_text for neg in negation_words)
+
+            # If one has negation and other doesn't, that's a potential contradiction
+            if proposed_has_negation != decision_has_negation and topic_score > 0:
+                contradiction_score += 1.0
+
+            total_score = topic_score + contradiction_score
+
+            if total_score >= 2.0:  # Minimum threshold for potential contradiction
+                contradictions.append((total_score, decision))
+
+        # Sort by score descending
+        contradictions.sort(key=lambda x: x[0], reverse=True)
+
+        return [decision for score, decision in contradictions]
 
     def get_patterns_for_problem(self, problem_description: str) -> list[KnowledgeEntry]:
         """Find patterns that might help with a problem."""
@@ -1153,6 +1499,73 @@ class InMemoryKnowledgeService:
             if tag in entry.tags
         ]
 
+    def get_entries_by_type(self, entry_type: str) -> list[KnowledgeEntry]:
+        """
+        Get all entries of a specific type.
+
+        Args:
+            entry_type: The type to filter by (e.g., "decision", "pattern", "discovery")
+
+        Returns:
+            List of entries matching the specified type
+        """
+        return [
+            entry for entry in self._entries.values()
+            if entry.entry_type == entry_type
+        ]
+
+    def get_entries_by_project(self, project_id: str) -> list[KnowledgeEntry]:
+        """
+        Get all entries from a specific project.
+
+        Args:
+            project_id: The project ID to filter by
+
+        Returns:
+            List of entries from the specified project
+        """
+        return [
+            entry for entry in self._entries.values()
+            if entry.source_project == project_id
+        ]
+
+    def get_decision_by_id(self, decision_id: str) -> Decision | None:
+        """
+        Get a specific decision by ID.
+
+        Args:
+            decision_id: The decision ID to look up
+
+        Returns:
+            The Decision if found, None otherwise
+        """
+        return self._decisions.get(decision_id)
+
+    def get_decisions_by_project(self, project_id: str) -> list[Decision]:
+        """
+        Get all decisions for a specific project.
+
+        Args:
+            project_id: The project ID to filter by
+
+        Returns:
+            List of decisions from the specified project
+        """
+        return [
+            decision for decision in self._decisions.values()
+            if decision.project_id == project_id
+        ]
+
+    @property
+    def entry_count(self) -> int:
+        """Get the total number of stored entries."""
+        return len(self._entries)
+
+    @property
+    def decision_count(self) -> int:
+        """Get the total number of stored decisions."""
+        return len(self._decisions)
+
     def clear(self) -> None:
         """Reset all state. Useful for test cleanup between test cases."""
         self._entries.clear()
@@ -1170,13 +1583,55 @@ class InMemoryQuestionService:
     this implementation:
     - Stores all tickets, answers, and routing decisions
     - Provides query methods for test assertions
-    - Supports basic keyword routing (like SimpleQuestionService)
+    - Supports configurable keyword routing
+    - Supports basic auto-answer with knowledge base integration
     - Can be cleared/reset between tests
+
+    Example:
+        # Create with custom routing rules
+        service = InMemoryQuestionService(
+            routing_rules={
+                "database-team": ["database", "sql", "postgres", "migration"],
+                "frontend-team": ["react", "css", "ui", "component"],
+            }
+        )
+
+        # Or with knowledge base for auto-answer
+        knowledge = InMemoryKnowledgeService()
+        service = InMemoryQuestionService(knowledge_service=knowledge)
     """
 
-    def __init__(self):
+    # Default routing rules mapping route -> keywords
+    DEFAULT_ROUTING_RULES: dict[str, list[str]] = {
+        "security-team": ["security", "auth", "permission", "credential", "encryption"],
+        "product-owner": ["requirement", "should we", "business", "stakeholder", "feature"],
+        "devops": ["deploy", "infrastructure", "scaling", "kubernetes", "docker", "ci/cd"],
+        "architect": ["design", "architecture", "pattern", "refactor", "structure"],
+        "qa-team": ["test", "testing", "qa", "quality", "coverage", "bug"],
+    }
+
+    def __init__(
+        self,
+        routing_rules: dict[str, list[str]] | None = None,
+        knowledge_service: KnowledgeService | None = None,
+        auto_answer_threshold: float = 0.7,
+    ):
+        """
+        Initialize the question service.
+
+        Args:
+            routing_rules: Custom routing rules mapping route name to keywords.
+                          If None, uses DEFAULT_ROUTING_RULES.
+            knowledge_service: Optional knowledge service for auto-answer capability.
+            auto_answer_threshold: Confidence threshold for auto-answering (0-1).
+                                  Higher values require more keyword matches.
+        """
         self._tickets: dict[str, QuestionTicket] = {}
         self._routing_history: list[dict[str, Any]] = []
+        self._routing_rules = routing_rules if routing_rules is not None else self.DEFAULT_ROUTING_RULES.copy()
+        self._knowledge_service = knowledge_service
+        self._auto_answer_threshold = auto_answer_threshold
+        self._auto_answer_history: list[dict[str, Any]] = []
 
     def ask(
         self,
@@ -1269,9 +1724,82 @@ class InMemoryQuestionService:
         """
         Attempt to answer from knowledge base.
 
-        Returns False as this implementation doesn't have knowledge base integration.
+        Uses keyword matching to find relevant knowledge entries and
+        calculates a confidence score based on match quality.
+
+        Returns True if auto-answered, False if needs human.
+
+        The auto-answer is recorded in the ticket with answered_by="auto"
+        and can be verified or overridden by a human.
         """
+        if not self._knowledge_service:
+            return False
+
+        ticket = self._tickets.get(ticket_id)
+        if not ticket:
+            return False
+
+        # Search knowledge base for relevant entries
+        results = self._knowledge_service.retrieve(
+            query=ticket.question,
+            limit=3,
+        )
+
+        if not results:
+            self._record_auto_answer_attempt(ticket_id, False, 0.0, "No matching entries")
+            return False
+
+        # Calculate confidence based on keyword overlap
+        question_words = set(ticket.question.lower().split())
+        best_score = 0.0
+        best_entry = None
+
+        for entry in results:
+            entry_words = set(entry.content.lower().split())
+            # Calculate Jaccard-like similarity
+            intersection = len(question_words & entry_words)
+            union = len(question_words | entry_words)
+            score = intersection / union if union > 0 else 0.0
+
+            if score > best_score:
+                best_score = score
+                best_entry = entry
+
+        if best_score >= self._auto_answer_threshold and best_entry:
+            # Auto-answer with the best matching entry
+            ticket.answer = f"[Auto-answered from knowledge base]\n\n{best_entry.content}"
+            ticket.answered_by = "auto"
+            ticket.answered_at = datetime.now()
+            ticket.status = "auto_answered"  # Distinct status for verification
+            ticket.validation_notes = f"Confidence: {best_score:.2%}, Source: {best_entry.id}"
+
+            self._record_auto_answer_attempt(
+                ticket_id, True, best_score,
+                f"Matched entry {best_entry.id}"
+            )
+            return True
+
+        self._record_auto_answer_attempt(
+            ticket_id, False, best_score,
+            f"Confidence {best_score:.2%} below threshold {self._auto_answer_threshold:.2%}"
+        )
         return False
+
+    def _record_auto_answer_attempt(
+        self,
+        ticket_id: str,
+        success: bool,
+        confidence: float,
+        reason: str,
+    ) -> None:
+        """Record an auto-answer attempt for debugging and improvement."""
+        self._auto_answer_history.append({
+            "ticket_id": ticket_id,
+            "success": success,
+            "confidence": confidence,
+            "reason": reason,
+            "timestamp": datetime.now().isoformat(),
+        })
 
     def route(self, ticket_id: str) -> str:
         """
@@ -1287,39 +1815,37 @@ class InMemoryQuestionService:
 
     def _determine_route(self, ticket: QuestionTicket) -> str:
         """
-        Internal routing logic using keyword matching.
+        Internal routing logic using configurable keyword matching.
 
-        Routes based on question content keywords.
+        Routes based on question content keywords using the configured
+        routing rules.
+
+        Returns:
+            The route name (e.g., "security-team") or "human" as default
         """
         question_lower = ticket.question.lower()
 
-        if any(kw in question_lower for kw in ["security", "auth", "permission"]):
-            return "security-team"
-        elif any(kw in question_lower for kw in ["requirement", "should we", "business"]):
-            return "product-owner"
-        elif any(kw in question_lower for kw in ["deploy", "infrastructure", "scaling"]):
-            return "devops"
-        elif any(kw in question_lower for kw in ["design", "architecture", "pattern"]):
-            return "architect"
-        elif any(kw in question_lower for kw in ["test", "testing", "qa"]):
-            return "qa-team"
-        else:
-            return "human"  # Default to the user
+        # Check each route's keywords
+        for route, keywords in self._routing_rules.items():
+            if any(kw.lower() in question_lower for kw in keywords):
+                return route
+
+        return "human"  # Default to the user
 
     def _get_routing_reason(self, ticket: QuestionTicket, routed_to: str) -> str:
         """Generate a routing reason based on the routing decision."""
-        if routed_to == "security-team":
-            return "Question contains security-related keywords"
-        elif routed_to == "product-owner":
-            return "Question appears to be about requirements or business logic"
-        elif routed_to == "devops":
-            return "Question relates to deployment or infrastructure"
-        elif routed_to == "architect":
-            return "Question relates to design or architecture"
-        elif routed_to == "qa-team":
-            return "Question relates to testing"
+        if routed_to == "human":
+            return "Default routing to human (no keyword matches)"
+
+        # Find matching keywords for explanation
+        question_lower = ticket.question.lower()
+        keywords = self._routing_rules.get(routed_to, [])
+        matched = [kw for kw in keywords if kw.lower() in question_lower]
+
+        if matched:
+            return f"Matched keywords for {routed_to}: {', '.join(matched)}"
         else:
-            return "Default routing to human"
+            return f"Routed to {routed_to}"
 
     # =========================================================================
     # Query methods for test assertions
@@ -1373,15 +1899,134 @@ class InMemoryQuestionService:
         """
         return list(self._routing_history)
 
+    def get_tickets_by_route(self, routed_to: str) -> list[QuestionTicket]:
+        """
+        Get all tickets routed to a specific destination.
+
+        Args:
+            routed_to: The route to filter by (e.g., "security-team", "human")
+
+        Returns:
+            List of tickets routed to the specified destination
+        """
+        return [t for t in self._tickets.values() if t.routed_to == routed_to]
+
+    def get_tickets_by_priority(self, priority: Priority) -> list[QuestionTicket]:
+        """
+        Get all tickets with a specific priority.
+
+        Args:
+            priority: The Priority enum value to filter by
+
+        Returns:
+            List of tickets with the specified priority
+        """
+        return [t for t in self._tickets.values() if t.priority == priority]
+
+    def get_auto_answer_history(self) -> list[dict[str, Any]]:
+        """
+        Get the history of auto-answer attempts.
+
+        Returns:
+            List of auto-answer attempt records, each containing:
+            - ticket_id: ID of the ticket
+            - success: Whether auto-answer was successful
+            - confidence: Confidence score (0-1)
+            - reason: Explanation of the outcome
+            - timestamp: When the attempt was made
+        """
+        return list(self._auto_answer_history)
+
+    def get_answered_tickets(self) -> list[QuestionTicket]:
+        """
+        Get all tickets that have been answered.
+
+        Returns:
+            List of tickets with status "answered" or "auto_answered"
+        """
+        return [t for t in self._tickets.values() if t.status in ("answered", "auto_answered")]
+
+    def get_auto_answered_tickets(self) -> list[QuestionTicket]:
+        """
+        Get all tickets that were auto-answered.
+
+        Returns:
+            List of tickets with status "auto_answered"
+        """
+        return [t for t in self._tickets.values() if t.status == "auto_answered"]
+
+    def set_routing_rules(self, rules: dict[str, list[str]]) -> None:
+        """
+        Update the routing rules.
+
+        Args:
+            rules: New routing rules mapping route name to keywords
+        """
+        self._routing_rules = rules.copy()
+
+    def add_routing_rule(self, route: str, keywords: list[str]) -> None:
+        """
+        Add or update a single routing rule.
+
+        Args:
+            route: The route name (e.g., "database-team")
+            keywords: List of keywords that should route to this destination
+        """
+        self._routing_rules[route] = keywords.copy()
+
+    def get_routing_rules(self) -> dict[str, list[str]]:
+        """
+        Get the current routing rules.
+
+        Returns:
+            Copy of the current routing rules dictionary
+        """
+        return {k: v.copy() for k, v in self._routing_rules.items()}
+
+    def set_knowledge_service(self, service: KnowledgeService | None) -> None:
+        """
+        Set or update the knowledge service for auto-answer capability.
+
+        Args:
+            service: KnowledgeService instance, or None to disable auto-answer
+        """
+        self._knowledge_service = service
+
+    def set_auto_answer_threshold(self, threshold: float) -> None:
+        """
+        Set the confidence threshold for auto-answering.
+
+        Args:
+            threshold: Value between 0 and 1. Higher values require better matches.
+        """
+        self._auto_answer_threshold = max(0.0, min(1.0, threshold))
+
+    @property
+    def ticket_count(self) -> int:
+        """Get the total number of tickets."""
+        return len(self._tickets)
+
+    @property
+    def pending_count(self) -> int:
+        """Get the number of open tickets."""
+        return len([t for t in self._tickets.values() if t.status == "open"])
+
+    @property
+    def answered_count(self) -> int:
+        """Get the number of answered tickets (including auto-answered)."""
+        return len([t for t in self._tickets.values() if t.status in ("answered", "auto_answered")])
+
     def clear(self) -> None:
         """
         Reset all state.
 
-        Clears all tickets and routing history. Useful for resetting
+        Clears all tickets, routing history, and auto-answer history.
+        Preserves routing rules and configuration. Useful for resetting
         state between tests.
         """
         self._tickets.clear()
         self._routing_history.clear()
+        self._auto_answer_history.clear()
 
 
 @dataclass
@@ -1498,11 +2143,8 @@ class InMemoryCommunicationService:
                     lines.append(f"- {intent_record.intent} (recorded: {intent_record.recorded_at.isoformat()})")
                 lines.append("")
 
-        # Include relevant feedback
-        project_feedback = [
-            f for f in self._feedback
-            if f.target_id.startswith(project_id) or project_id in f.target_id
-        ]
+        # Include relevant feedback using exact project matching
+        project_feedback = self._get_feedback_for_project(project_id)
         if project_feedback:
             lines.append("## Recent Feedback")
             for fb in project_feedback[-5:]:  # Last 5 feedback entries
@@ -1562,23 +2204,96 @@ class InMemoryCommunicationService:
         self,
         project_id: str,
         max_tokens: int = 4000,
+        chars_per_token: float = 4.0,
     ) -> str:
         """
         Compress project history to fit in context window.
 
-        Uses simple truncation with a note about compression.
+        Uses truncation with preservation of key sections.
+
+        Args:
+            project_id: The project to compress history for
+            max_tokens: Maximum tokens to allow (default: 4000)
+            chars_per_token: Character-to-token ratio for estimation (default: 4.0)
+                           Use ~3.5 for code-heavy content, ~4.5 for prose
+
+        Returns:
+            Compressed context string that fits within token limit
         """
         context = self.get_resumption_context(project_id)
 
-        # Rough token estimate (4 chars per token)
-        max_chars = max_tokens * 4
+        # Calculate max characters based on configurable ratio
+        max_chars = int(max_tokens * chars_per_token)
 
         if len(context) <= max_chars:
             return context
 
-        # Truncate with notice
-        truncated = context[:max_chars - 100]
-        return truncated + "\n\n... (history compressed, see full context for details)"
+        # Try to preserve important sections by truncating middle content
+        lines = context.split("\n")
+        header_lines = []
+        important_lines = []
+        other_lines = []
+
+        current_section = "header"
+        for line in lines:
+            if line.startswith("# ") or line.startswith("## "):
+                if "Intent" in line or "Constraints" in line or "Blocked" in line:
+                    current_section = "important"
+                else:
+                    current_section = "other"
+                important_lines.append(line) if current_section == "important" else other_lines.append(line)
+            elif current_section == "header" and line.strip():
+                header_lines.append(line)
+                if "Generated:" in line:
+                    current_section = "other"
+            elif current_section == "important":
+                important_lines.append(line)
+            else:
+                other_lines.append(line)
+
+        # Build compressed version
+        result_lines = header_lines + [""] + important_lines
+
+        # Add other content if space permits
+        current_len = sum(len(line) + 1 for line in result_lines)
+        for line in other_lines:
+            if current_len + len(line) + 1 < max_chars - 100:
+                result_lines.append(line)
+                current_len += len(line) + 1
+            else:
+                break
+
+        result = "\n".join(result_lines)
+
+        if len(result) >= max_chars:
+            # Still too long, do hard truncation
+            result = result[:max_chars - 100]
+
+        return result + "\n\n... (history compressed, see full context for details)"
+
+    def _get_feedback_for_project(self, project_id: str) -> list[FeedbackRecord]:
+        """
+        Get feedback records for a project using proper matching.
+
+        Matches feedback where:
+        - target_id exactly equals project_id
+        - target_id starts with "{project_id}/" (e.g., "proj1/chunk1")
+        - target_id starts with "{project_id}:" (e.g., "proj1:task1")
+
+        Args:
+            project_id: The project ID to filter by
+
+        Returns:
+            List of matching feedback records
+        """
+        results = []
+        for fb in self._feedback:
+            target = fb.target_id
+            if (target == project_id or
+                target.startswith(f"{project_id}/") or
+                target.startswith(f"{project_id}:")):
+                results.append(fb)
+        return results
 
     # =========================================================================
     # Query Methods for Test Assertions
@@ -1625,6 +2340,110 @@ class InMemoryCommunicationService:
             List of all feedback records, in chronological order.
         """
         return self._feedback.copy()
+
+    def get_feedback_for_project(self, project_id: str) -> list[FeedbackRecord]:
+        """
+        Get all feedback records for a specific project.
+
+        This uses proper project matching (exact match or prefix with delimiter).
+
+        Args:
+            project_id: The project ID to filter by
+
+        Returns:
+            List of feedback records for the project
+        """
+        return self._get_feedback_for_project(project_id)
+
+    def get_feedback_by_type(self, target_type: str) -> list[FeedbackRecord]:
+        """
+        Get all feedback records of a specific type.
+
+        Args:
+            target_type: The type to filter by (e.g., "chunk", "answer", "suggestion")
+
+        Returns:
+            List of feedback records matching the type
+        """
+        return [fb for fb in self._feedback if fb.target_type == target_type]
+
+    def get_feedback_by_rating(
+        self,
+        min_rating: int | None = None,
+        max_rating: int | None = None,
+    ) -> list[FeedbackRecord]:
+        """
+        Get feedback records filtered by rating range.
+
+        Args:
+            min_rating: Minimum rating (inclusive), or None for no lower bound
+            max_rating: Maximum rating (inclusive), or None for no upper bound
+
+        Returns:
+            List of feedback records with ratings in the specified range
+        """
+        results = []
+        for fb in self._feedback:
+            if fb.rating is None:
+                continue
+            if min_rating is not None and fb.rating < min_rating:
+                continue
+            if max_rating is not None and fb.rating > max_rating:
+                continue
+            results.append(fb)
+        return results
+
+    def get_latest_intent(self, project_id: str) -> IntentRecord | None:
+        """
+        Get the most recent intent for a project.
+
+        Args:
+            project_id: The project ID
+
+        Returns:
+            The latest IntentRecord if any exists, None otherwise
+        """
+        intents = self._intents.get(project_id, [])
+        return intents[-1] if intents else None
+
+    def get_handoffs_by_type(self, handoff_type: str) -> list[HandoffPackage]:
+        """
+        Get all handoffs of a specific type.
+
+        Args:
+            handoff_type: The type to filter by (e.g., "ai_to_human", "human_to_ai")
+
+        Returns:
+            List of handoff packages matching the type
+        """
+        return [h for h in self._handoffs.values() if h.handoff_type == handoff_type]
+
+    def get_handoffs_for_project(self, project_id: str) -> list[HandoffPackage]:
+        """
+        Get all handoffs for a specific project.
+
+        Args:
+            project_id: The project ID to filter by
+
+        Returns:
+            List of handoff packages for the project
+        """
+        return [h for h in self._handoffs.values() if h.project_id == project_id]
+
+    @property
+    def handoff_count(self) -> int:
+        """Get the total number of handoffs."""
+        return len(self._handoffs)
+
+    @property
+    def feedback_count(self) -> int:
+        """Get the total number of feedback records."""
+        return len(self._feedback)
+
+    @property
+    def intent_count(self) -> int:
+        """Get the total number of intent records across all projects."""
+        return sum(len(intents) for intents in self._intents.values())
 
     def clear(self) -> None:
         """
