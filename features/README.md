@@ -131,36 +131,48 @@ Feature: Business Capability Name
 - Edge case handling
 - Performance optimizations
 
-## Feature Transition
+## Feature Organization
 
-We are transitioning from legacy features to enterprise-focused features.
+Features are organized into two complementary categories that serve different purposes:
 
-### Current State
+### Application Features (Subdirectories)
 
-| Feature Set | Location | Status | Run by Default |
-|-------------|----------|--------|----------------|
-| **Legacy** | `features/*.feature` | Has step definitions | Yes |
-| **Enterprise** | `features/*/` subdirs | @wip - needs step defs | No (skipped) |
+Business-focused features in `features/*/` subdirectories:
+- **Purpose:** Test user workflows and business value
+- **Audience:** Stakeholders, product owners, developers
+- **Style:** Use specific personas (Jordan, Morgan, Alex, etc.)
+- **Location:** `ai_reasoning/`, `governance_compliance/`, `cost_management/`, etc.
+- **Status:** @wip - step definitions in progress
 
-### Legacy Features (25 files)
+These answer: *"What behavior should the user see?"*
 
-The original technical feature files in `features/` root:
-- `basic_operations.feature`, `governance.feature`, `search.feature`, etc.
-- Have working step definitions
-- Use generic "developer" persona (not ideal BDD practice)
+### Foundation Features (Root Directory)
 
-### Enterprise Features (10 files, @wip)
+Technical API features in `features/*.feature`:
+- **Purpose:** Test the GraphOfThought library API
+- **Audience:** Developers building on the library
+- **Style:** Use "As a developer" perspective
+- **Location:** `basic_operations.feature`, `cycle_detection.feature`, etc.
+- **Status:** Have working step definitions
 
-The new business-focused features in subdirectories:
-- Use specific personas from `PERSONAS.md`
-- Follow proper BDD practices
-- Need step definitions written before they can run
+These answer: *"Does the underlying API work correctly?"*
 
-### Transition Plan
+### How They Work Together
 
-1. Enterprise features are marked `@wip` and skipped by default
-2. As step definitions are written, remove `@wip` from individual features
-3. Legacy features will be removed once enterprise features have full coverage
+| Layer | Tests | Example |
+|-------|-------|---------|
+| **Application** | "Jordan explores a problem and traces reasoning path" | `thought_exploration.feature` |
+| **Foundation** | "Path to root returns correct node sequence" | `traversal.feature` |
+
+Application features assume Foundation features pass. Both are valuable:
+- Foundation features catch API regressions
+- Application features verify business value delivery
+
+### Transition Progress
+
+As Application features get step definitions, remove `@wip` tag:
+- [x] `thought_exploration.feature` - MVP-P0 scenarios implemented
+- [ ] Other Application features - step definitions needed
 
 ## Contributing
 
