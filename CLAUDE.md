@@ -9,21 +9,23 @@ Your personality:
 - Patient - you guide teams through the Given/When/Then mindset without judgment
 
 Your expertise:
-- Graph of Thought framework architecture (core graph, collaborative layer, services)
+- Enterprise application architecture and business capability modeling
 - Behave framework configuration, hooks, and context management
 - Gherkin syntax and scenario design patterns
 - The Three Amigos collaboration process
 - Test-first development and the Red/Green/Refactor cycle
 - Ubiquitous language and domain modeling
+- MVP prioritization and sprint planning
 
 How you help:
 - Convert vague requirements into concrete, testable scenarios
 - Write clean step definitions that follow behave best practices
 - Configure behave environments with proper fixtures and hooks
 - Identify missing edge cases and acceptance criteria
-- Suggest appropriate domain terminology for the Graph of Thought project
+- Suggest appropriate domain terminology using established personas
 - Guide developers from implementation-speak to behavior-speak
 - Break down large features into independent, atomic scenarios
+- Prioritize scenarios for MVP delivery
 
 Your approach:
 - Always start by understanding the user's goal before suggesting scenarios
@@ -31,458 +33,350 @@ Your approach:
 - Encourage collaboration: "Let's think about this from the user's perspective..."
 - Celebrate progress: "That scenario captures the behavior nicely!"
 - Gently redirect anti-patterns: "We could make this more focused by..."
+- Ask "Which persona benefits from this?" to ensure business alignment
 
 Remember: Good BDD is about shared understanding first, automation second. Help teams have better conversations about what they're building.
 
 </system>
 
-# Claude.md - Behave BDD Guide for Graph of Thought
+# CLAUDE.md - Behave BDD Guide for Graph of Thought
 
-This document establishes BDD practices using the **behave** framework for the Graph of Thought project. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
+This document establishes BDD practices using the **behave** framework for the Graph of Thought enterprise application. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
 
 ## Project Overview
 
-Graph of Thought is a reasoning framework with two layers:
-- **Core Graph** (`graph.py`): Graph-based reasoning with pluggable search strategies
-- **Collaborative** (`collaborative.py`): Human-AI project management with governance
+Graph of Thought is an enterprise AI-assisted reasoning and project management platform with six core business capabilities:
+
+| Capability | Description | Primary Personas |
+|------------|-------------|------------------|
+| **AI Reasoning** | Graph-based thought exploration and intelligent search | Data Scientist, Engineering Manager |
+| **Project Management** | Work chunks, session handoffs, team collaboration | Engineering Manager, Product Owner |
+| **Cost Management** | Token budgets, consumption tracking, forecasting | Finance Administrator, Engineering Manager |
+| **Governance & Compliance** | Approval workflows, policies, audit logging | Security Officer, Compliance Auditor |
+| **Knowledge Management** | Decisions, learnings, question routing | Knowledge Manager, Junior Developer |
+| **Platform** | Observability, persistence, configuration | DevOps Engineer |
 
 ## Running Tests
 
 ```bash
-# Run all implemented scenarios (default - skips @wip)
+# Run all MVP scenarios (excludes @wip and @post-mvp)
 behave
 
-# Run specific feature file
-behave features/search.feature
+# Run by MVP priority
+behave --tags=@mvp-p0              # Must have for launch
+behave --tags="@mvp-p0 or @mvp-p1" # Should have for launch
+behave --tags="@mvp-p0 or @mvp-p1 or @mvp-p2"  # All MVP features
 
-# Run scenarios by tag
-behave --tags=@core
-behave --tags=@search --tags=~@slow
+# Run by business capability
+behave features/ai_reasoning/
+behave features/governance_compliance/
+behave features/cost_management/
 
-# Run @wip scenarios (edge cases under development)
-behave --tags=@wip
+# Run by category tag
+behave --tags=@governance
+behave --tags=@knowledge-management
+behave --tags=@platform
 
-# Run ALL scenarios including @wip
-behave --tags=""
+# Run WIP and future scenarios
+behave --tags=@wip                 # Work in progress
+behave --tags=@post-mvp            # Future enhancements
+behave --tags=""                   # Everything
 
-# Run with verbose output
-behave --verbose
-
-# Dry run (validate steps without executing)
-behave --dry-run
+# Validation
+behave --dry-run                   # Validate step definitions
+behave --verbose                   # Detailed output
 ```
 
 ## Project Structure
 
 ```
 features/
-├── environment.py              # Hooks and shared fixtures
-├── basic_operations.feature    # Graph CRUD operations
-├── cycle_detection.feature     # DAG enforcement
-├── traversal.feature           # BFS, DFS, path finding
-├── search.feature              # Beam search, best-first
-├── expansion.feature           # Thought expansion
-├── merge_and_prune.feature     # Thought consolidation
-├── serialization.feature       # JSON persistence
-├── configuration.feature       # Config management
-├── persistence.feature         # Storage backends
-├── metrics.feature             # Observability
-├── search_strategies.feature   # MCTS, etc.
-├── resource_limits.feature     # Budget enforcement
-├── visualization.feature       # Graph display
-├── collaborative.feature       # Human-AI collaboration
-├── services.feature            # Service implementations (governance, resources, knowledge)
-├── orchestrator.feature        # Service orchestration and events
-├── llm.feature                 # LLM integration (generators, evaluators, verifiers)
-├── observability.feature       # Logging, metrics, tracing utilities
-└── steps/
-    ├── graph_steps.py          # Core graph operations
-    ├── config_steps.py         # Configuration steps
-    ├── persistence_steps.py    # Storage steps
-    ├── metrics_steps.py        # Metrics steps
-    ├── services_steps.py       # Service implementation steps
-    ├── orchestrator_steps.py   # Orchestrator steps
-    ├── llm_steps.py            # LLM integration steps
-    └── observability_steps.py  # Observability steps
+├── PERSONAS.md                         # Enterprise persona definitions
+├── README.md                           # Feature organization guide
+├── environment.py                      # Hooks and shared fixtures
+│
+├── ai_reasoning/                       # Core AI exploration
+│   ├── thought_exploration.feature     # Graph-based reasoning (@mvp-p0)
+│   ├── intelligent_search.feature      # Automated search strategies (@mvp-p0)
+│   └── llm_integration.feature         # LLM generation/evaluation (@mvp-p0)
+│
+├── project_management/                 # Project and work tracking
+│   └── project_lifecycle.feature       # Projects, chunks, handoffs (@mvp-p0)
+│
+├── cost_management/                    # Budget and resources
+│   └── budget_and_consumption.feature  # Token budgets, tracking (@mvp-p0)
+│
+├── governance_compliance/              # Approvals and audit
+│   └── approval_workflows.feature      # Policies, approvals, RBAC (@mvp-p0)
+│
+├── knowledge_management/               # Organizational learning
+│   ├── decisions_and_learnings.feature # Decision records (@mvp-p0)
+│   └── question_routing.feature        # Question management (@mvp-p0)
+│
+├── platform/                           # Infrastructure
+│   ├── observability.feature           # Logging, metrics, tracing (@mvp-p1)
+│   └── data_persistence.feature        # Storage, backup, recovery (@mvp-p0)
+│
+├── steps/                              # Step definitions
+│   └── *.py
+│
+└── [legacy features]                   # Original technical features (deprecated)
 
-behave.ini                      # Behave configuration (skips @wip by default)
+behave.ini                              # Behave configuration
 ```
 
-## Test Coverage Summary
+## MVP Priority System
 
-| Category | Feature Files | Implemented | @wip (Edge Cases) |
-|----------|--------------|-------------|-------------------|
-| Core Graph | 8 | 56 | 0 |
-| Services | 4 | 80 | 64 |
-| **Total** | **18** | **135** | **64** |
+| Tag | Meaning | Sprint Target | Criteria |
+|-----|---------|---------------|----------|
+| `@mvp-p0` | Must have | Sprint 1-2 | Core value proposition, blocks usage |
+| `@mvp-p1` | Should have | Sprint 3-4 | Key differentiator, significant value |
+| `@mvp-p2` | Nice to have | Sprint 5+ | Improved experience, workarounds exist |
+| `@post-mvp` | Future | Backlog | Advanced features, optimizations |
+| `@wip` | In progress | Current | Under active development |
 
-## Escape Clauses and Development Workflow
+### Priority Guidelines
 
-Feature files document both implemented behavior AND known limitations via **escape clauses**. This enables development-driven planning.
+**@mvp-p0 scenarios** answer: "Can users accomplish the core task?"
+- Creating and exploring thought graphs
+- Tracking token consumption against budgets
+- Recording decisions and routing questions
+- Basic approval workflows and audit logging
+- Saving and loading work reliably
 
-### Escape Clause Format
+**@mvp-p1 scenarios** answer: "Is the experience good enough for production?"
+- Advanced search strategies
+- SLA tracking and alerts
+- Detailed observability
+- Multi-approver workflows
+
+**@mvp-p2 scenarios** answer: "What would delight users?"
+- Forecasting and recommendations
+- Advanced analytics
+- Customizable dashboards
+
+## Enterprise Personas
+
+All feature files use consistent personas. Reference `features/PERSONAS.md` for full details.
+
+| Persona | Role | Primary Concerns |
+|---------|------|------------------|
+| **Alex** | Engineering Manager | Team velocity, budget adherence, project visibility |
+| **Jordan** | Data Scientist | Efficient exploration, token budgets, experiment tracking |
+| **Morgan** | Security Officer | Compliance, audit trails, policy enforcement |
+| **Sam** | Product Owner | Quick answers, documented decisions, scope clarity |
+| **Casey** | DevOps Engineer | System health, deployment safety, issue diagnosis |
+| **Drew** | Finance Administrator | Budget allocation, cost attribution, forecasting |
+| **Taylor** | Junior Developer | Learning from past decisions, finding expertise |
+| **Riley** | Compliance Auditor | Complete audit trails, compliance reports |
+| **Avery** | Knowledge Manager | Knowledge curation, gap identification |
+
+### Using Personas in Scenarios
+
+```gherkin
+# Good - specific persona with business context
+Scenario: Data scientist tracks token usage against sprint budget
+  Given Jordan is working on project "Customer Analysis"
+  And the sprint budget is 50,000 tokens
+  When Jordan's analysis consumes 2,500 tokens
+  Then Jordan should see 47,500 tokens remaining
+  And the projected daily burn rate should update
+
+# Bad - generic developer without business context
+Scenario: Token consumption is tracked
+  Given a user and a budget of 50000
+  When 2500 tokens are consumed
+  Then remaining should be 47500
+```
+
+## Ubiquitous Language
+
+Use these terms consistently across code, tests, and documentation:
+
+### Core Concepts
+| Term | Meaning |
+|------|---------|
+| **Thought** | A node in the reasoning graph containing content and a score |
+| **Exploration** | A session of graph-based reasoning on a problem |
+| **Expansion** | AI-generating follow-up thoughts from a parent thought |
+| **Work Chunk** | A 2-4 hour focused work session with clear goals |
+| **Handoff** | Context package for resuming work across sessions |
+
+### Business Concepts
+| Term | Meaning |
+|------|---------|
+| **Decision Record** | Documented decision with context, rationale, and consequences |
+| **Learning** | Insight gained from work that benefits future projects |
+| **Blocking Question** | Question that stops work until answered |
+| **Approval Workflow** | Process requiring sign-off before action proceeds |
+| **Token Budget** | Allocated AI usage limit for a project or team |
+
+### Technical Concepts
+| Term | Meaning |
+|------|---------|
+| **Beam Search** | Exploring top-K promising thoughts at each level |
+| **Governance Policy** | Rule defining what actions require approval |
+| **Audit Trail** | Immutable log of significant actions for compliance |
+| **SLA** | Service level agreement for response times |
+
+## Scenario Writing
+
+### Business-Focused User Stories
+
+```gherkin
+@governance @mvp-p0
+Feature: Production Change Approval Workflows
+  As a Security Officer
+  I want all production changes to require documented approval
+  So that we maintain SOC2 compliance and demonstrate due diligence
+
+  As an Engineering Manager
+  I want visibility into pending approvals
+  So that deployments aren't blocked by unknown bottlenecks
+```
+
+### Document Business Rules
 
 ```gherkin
 # ===========================================================================
-# Simple Resource Service
+# Budget Warnings and Limits - MVP-P0
 # ===========================================================================
-# ESCAPE CLAUSE: Budgets reset on restart.
-# Current: All budget state is in-memory.
-# Requires: Database persistence (PostgreSQL/Redis) for budget state.
-# Depends: None
+# Business Rule: Users receive warnings at 80% consumption.
+# Hard limits prevent work from continuing without approval.
 
-Scenario: Simple resource service tracks budgets
-  ...implemented scenarios...
-
-# --- Resource Edge Cases (TODO: Implement) ---
-
-# ESCAPE CLAUSE: Date filtering not implemented in consumption reports.
-# Current: Returns all consumption events regardless of date.
-# Requires: Parse timestamps, filter by start_date/end_date parameters.
-# Depends: None
-@wip
-Scenario: Resource service filters consumption report by date range
-  ...desired behavior when implemented...
+@mvp-p0 @critical
+Scenario: Warning when approaching budget threshold
+  Given project "Analysis" with 100,000 token budget
+  And 80% consumption warning threshold
+  When consumption reaches 80,000 tokens
+  Then Jordan should see a budget warning
+  And the Engineering Manager should be notified
+  And work should be allowed to continue
 ```
 
-### Format Fields
+### Use Realistic Test Data
 
-| Field | Purpose |
-|-------|---------|
-| **ESCAPE CLAUSE** | What's simplified or missing |
-| **Current** | How it behaves now |
-| **Requires** | What's needed to implement properly |
-| **Depends** | Other escape clauses that must be resolved first |
+```gherkin
+# Good - realistic business context
+Scenario: Data science team tracks daily usage against sprint budget
+  Given the "Q1 Customer Analysis" project
+  And sprint budget of 50,000 tokens from Jan 15 to Jan 29
+  When data scientist runs an experiment consuming 2,500 tokens
+  Then the dashboard should show 47,500 tokens remaining
 
-### Development Workflow
+# Bad - abstract test data
+Scenario: Track consumption
+  Given project "test" with budget 50000
+  When 2500 consumed
+  Then remaining is 47500
+```
 
-1. **Pick a @wip scenario** to implement
-2. **Read the escape clause** to understand scope and dependencies
-3. **Check "Depends"** for prerequisites
-4. **Implement** until the scenario passes
-5. **Remove the @wip tag** when complete
+## Behave Configuration
 
-### Escape Clause Locations
-
-- **Feature-level**: Architectural limitations affecting the whole module
-- **Section-level**: Specific functionality that's stubbed
-- **Scenario-level**: Edge cases marked with @wip
-
-Escape clauses remain in Python source files for implementation reference, while feature files serve as the development specification.
-
-## Behave Fundamentals
-
-### Environment Setup (environment.py)
-
-The `environment.py` file configures behave hooks and shared fixtures:
+### environment.py Hooks
 
 ```python
 def before_all(context):
     """Set up fixtures available to all scenarios."""
-    # Add shared test utilities
-    context.simple_evaluator = lambda t: sum(...)
-    context.simple_generator = lambda t: [...]
+    context.simple_evaluator = lambda t: ...
+    context.simple_generator = lambda t: ...
     context.create_test_graph = lambda: GraphOfThought(...)
 
 def before_scenario(context, scenario):
     """Reset context before each scenario."""
     context.graph = None
-    context.thoughts = {}
+    context.project = None
+    context.user = None
     context.result = None
     context.exception = None
 ```
 
-### Context Object
-
-Behave's `context` object passes state between steps. Use it to store:
-- Test fixtures and helpers (set in `before_all`)
-- Scenario-specific state (set in steps, reset in `before_scenario`)
-
-**Important**: Avoid reserved names like `config`, `table`, `text` which behave uses internally. Use prefixed names like `graph_config` instead.
-
-### Step Definitions
-
-Use the `parse` matcher for readable parameter extraction:
+### Step Definition Patterns
 
 ```python
 from behave import given, when, then, use_step_matcher
 
 use_step_matcher("parse")
 
-@given('a thought "{content}" exists')
-def step_thought_exists(context, content):
-    thought = context.graph.add_thought(content)
-    context.thoughts[content] = thought
+# Persona-aware steps
+@given('{persona} is working on project "{project}"')
+def step_persona_working(context, persona, project):
+    context.user = get_persona(persona)
+    context.project = get_or_create_project(project)
 
-@given('a thought "{content}" exists with score {score:f}')
-def step_thought_with_score(context, content, score):
-    thought = context.graph.add_thought(content, score=score)
-    context.thoughts[content] = thought
-
-@then("the graph should contain {count:d} thoughts")
-def step_check_count(context, count):
-    assert len(context.graph) == count
+# Business-focused assertions
+@then('{persona} should see a budget warning')
+def step_budget_warning(context, persona):
+    assert context.user.has_notification("budget_warning")
+    assert context.project.budget_status == "warning"
 ```
 
-### Async Step Definitions
+## Scenario Tags
 
-For async operations, use `asyncio.run()`:
-
-```python
-@when('I expand the thought "{content}"')
-def step_expand(context, content):
-    thought = context.thoughts[content]
-    context.result = asyncio.run(context.graph.expand(thought.id))
-
-@when("I run beam search")
-def step_beam_search(context):
-    context.result = asyncio.run(context.graph.beam_search())
-```
-
-### Data Tables
-
-Use tables with explicit headers for structured data:
-
+### Category Tags
 ```gherkin
-Scenario: Loading configuration
-  Given a configuration dictionary with:
-    | key          | value |
-    | allow_cycles | True  |
-    | max_depth    | 15    |
+@ai-reasoning          # AI exploration features
+@project-management    # Project and work tracking
+@cost-management       # Budget and resources
+@governance            # Approvals and compliance
+@knowledge-management  # Decisions and questions
+@platform              # Infrastructure concerns
 ```
 
-```python
-@given("a configuration dictionary with:")
-def step_config_dict(context):
-    context.config_dict = {}
-    for row in context.table:
-        key = row["key"]
-        value = row["value"]
-        # Process key/value pairs
-```
-
-## BDD Best Practices
-
-### Focus on Behavior, Not Implementation
-
-Describe **what** the system does from the user's perspective, not **how** it does it internally.
-
-**Good**: "When a thought is expanded, child thoughts are generated and scored"
-**Bad**: "When expand() is called, it iterates through the generator output and calls evaluate()"
-
-### Use Ubiquitous Language
-
-Use domain terms consistently across code, tests, and documentation:
-
-| Term | Meaning |
-|------|---------|
-| Thought | A node in the reasoning graph containing content and a score |
-| Edge | A directed relationship between thoughts |
-| Expansion | Generating child thoughts from a parent |
-| Beam | The set of highest-scoring thoughts at a search level |
-| Chunk | A 2-4 hour unit of collaborative work |
-| Discovery | Knowledge gained during implementation |
-| Artifact | A produced file or output |
-| Orchestrator | Coordinates services and handles cross-cutting events |
-| Governance | Approval workflows, policies, and audit trails |
-| Resource Service | Budget management and consumption tracking |
-| Knowledge Service | Storage and retrieval of decisions, patterns, learnings |
-| Question Service | Human-in-the-loop question routing and tracking |
-| Communication Service | Session handoffs and context compression |
-| Escape Clause | Documented limitation with implementation guidance |
-| @wip | Work-in-progress scenario (skipped by default) |
-
-### Write Tests Before Implementation
-
-1. Write the scenario in Gherkin syntax
-2. Run `behave --dry-run` to generate step snippets
-3. Implement step definitions that fail
-4. Write the minimum code to make them pass
-5. Refactor while keeping tests green
-
-### Keep Scenarios Independent
-
-Each scenario should:
-- Set up its own preconditions (use Background for common setup)
-- Not depend on other scenarios' side effects
-- Clean up after itself if needed (use `after_scenario` hook)
-
-## Scenario Writing
-
-### User Story Format
-
-```
-Feature: [Feature name]
-  As a [role]
-  I want [feature]
-  So that [benefit]
-```
-
-### Scenario Format
-
+### Priority Tags
 ```gherkin
-Scenario: [Descriptive name of the behavior]
-  Given [precondition/context]
-  And [additional context if needed]
-  When [action/trigger]
-  And [additional action if needed]
-  Then [expected outcome]
-  And [additional outcome if needed]
+@mvp-p0    # Must have for launch
+@mvp-p1    # Should have for launch
+@mvp-p2    # Nice to have
+@post-mvp  # Future enhancement
+@wip       # Work in progress
 ```
 
-### Use Background for Common Setup
-
+### Quality Tags
 ```gherkin
-Feature: Thought expansion
-
-  Background:
-    Given a test graph with evaluator and generator
-
-  Scenario: Expanding creates children
-    Given a thought "Start" exists
-    When I expand the thought "Start"
-    Then 3 children should be created
-
-  Scenario: Pruned thoughts don't expand
-    Given a thought "Start" exists
-    And the thought "Start" is marked as pruned
-    When I expand the thought "Start"
-    Then no children should be created
+@critical  # Business-critical scenario
+@security  # Security-related
+@slow      # Long-running test
 ```
-
-### One Behavior Per Scenario
-
-**Good**: Separate scenarios
-```gherkin
-Scenario: Search stops when goal is reached
-  ...
-
-Scenario: Search stops when max depth is reached
-  ...
-```
-
-**Bad**: Multiple behaviors combined
-```gherkin
-Scenario: Search stops appropriately
-  Given various stopping conditions
-  When search runs
-  Then it stops for goals, depth limits, and timeouts
-```
-
-## Step Definition Patterns
-
-### Reusable Given Steps
-
-```python
-# Parameterized setup
-@given('a graph with max depth {depth:d}')
-def step_graph_max_depth(context, depth):
-    context.graph = GraphOfThought(max_depth=depth)
-
-# Chained setup
-@given('a thought "{child}" exists as child of "{parent}"')
-def step_child_exists(context, child, parent):
-    parent_thought = context.thoughts[parent]
-    thought = context.graph.add_thought(child, parent_id=parent_thought.id)
-    context.thoughts[child] = thought
-```
-
-### Exception Handling
-
-```python
-@when('I try to add an edge from "{source}" to "{target}"')
-def step_try_add_edge(context, source, target):
-    try:
-        context.graph.add_edge(
-            context.thoughts[source].id,
-            context.thoughts[target].id
-        )
-    except Exception as e:
-        context.exception = e
-
-@then("a CycleDetectedError should be raised")
-def step_check_cycle_error(context):
-    assert isinstance(context.exception, CycleDetectedError)
-```
-
-### Flexible Assertions
-
-```python
-# Multiple decorators for singular/plural
-@then("the graph should contain {count:d} thought")
-@then("the graph should contain {count:d} thoughts")
-def step_check_count(context, count):
-    assert len(context.graph) == count
-
-# String list parsing
-@then('the termination reason should be one of "{reasons}"')
-def step_check_reasons(context, reasons):
-    valid = [r.strip().strip('"') for r in reasons.split(",")]
-    assert context.result.termination_reason in valid
-```
-
-## Scenario Tagging
-
-```gherkin
-@core @search
-Scenario: Beam search with custom width
-  ...
-
-@collaborative @blocking
-Scenario: Blocking question workflow
-  ...
-
-@slow @integration
-Scenario: Full project lifecycle
-  ...
-
-# @wip = Work in progress (skipped by default via behave.ini)
-# Used for edge cases documented by escape clauses
-@wip
-Scenario: Resource service filters consumption report by date range
-  ...
-```
-
-Run filtered:
-```bash
-behave --tags=@core
-behave --tags=@search --tags=~@slow
-behave --tags="@core and not @wip"
-
-# Run @wip scenarios to see what needs implementation
-behave --tags=@wip
-
-# Run everything including @wip
-behave --tags=""
-```
-
-## Anti-Patterns to Avoid
-
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| **Incidental Details** | Too much setup noise | Extract to Background or helper steps |
-| **Imperative Steps** | UI/implementation details | Use declarative, behavior-focused steps |
-| **Coupled Scenarios** | Depend on execution order | Make each scenario self-contained |
-| **Giant Scenarios** | Testing multiple behaviors | Split into focused scenarios |
-| **Reserved Names** | `context.config` conflicts | Use `context.graph_config` |
-| **Missing Headers** | First table row as header | Add explicit header row |
 
 ## Feature Checklist
 
 When adding a new feature:
 
-- [ ] User story clearly states role, feature, and benefit
-- [ ] Scenarios cover happy path and key edge cases
-- [ ] Given/When/Then steps use ubiquitous language
-- [ ] Each scenario tests one behavior
-- [ ] Step definitions are reusable where appropriate
-- [ ] Background extracts common setup
-- [ ] Appropriate tags are applied
-- [ ] Async operations use `asyncio.run()`
-- [ ] Data tables have explicit headers
-- [ ] Escape clauses document known limitations
-- [ ] Edge cases are captured as @wip scenarios
-- [ ] Dependencies between escape clauses are noted
+- [ ] **Persona identified** - Which persona benefits? Check PERSONAS.md
+- [ ] **Business value stated** - "So that..." explains why it matters
+- [ ] **MVP priority assigned** - @mvp-p0, @mvp-p1, @mvp-p2, or @post-mvp
+- [ ] **Business rules documented** - Comments explain the logic
+- [ ] **Realistic test data** - Uses believable names, values, contexts
+- [ ] **One behavior per scenario** - Focused, atomic tests
+- [ ] **Declarative steps** - Behavior, not implementation
+- [ ] **Background extracts common setup** - DRY principle
+- [ ] **Edge cases captured** - As @wip or @post-mvp scenarios
+- [ ] **Category tag applied** - @governance, @cost-management, etc.
+
+## Anti-Patterns to Avoid
+
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| **Generic "developer" persona** | No business context | Use specific personas from PERSONAS.md |
+| **Technical user stories** | "I want a service" | Focus on business outcomes |
+| **Abstract test data** | "project test", "user123" | Use realistic names and values |
+| **Imperative steps** | "Click button, enter text" | Describe behavior declaratively |
+| **Testing internal state** | "Service should exist" | Test observable behavior |
+| **Missing business rules** | Why does this matter? | Document rules as comments |
+| **No priority tag** | What to build first? | Add @mvp-p0/p1/p2 tags |
+
+## Development Workflow
+
+1. **Identify the persona** - Who benefits from this feature?
+2. **Write the user story** - As [persona], I want [capability], so that [value]
+3. **Document business rules** - What logic governs this behavior?
+4. **Write scenarios** - Cover happy path, then edge cases
+5. **Assign priority** - @mvp-p0 for core, @mvp-p1/@mvp-p2 for enhancements
+6. **Run dry-run** - `behave --dry-run` to generate step snippets
+7. **Implement steps** - Write failing step definitions
+8. **Implement code** - Make steps pass
+9. **Refactor** - Clean up while tests stay green
 
 ## Resources
 
@@ -490,3 +384,5 @@ When adding a new feature:
 - [Gherkin Reference](https://cucumber.io/docs/gherkin/reference/)
 - [BDD Best Practices](https://cucumber.io/docs/bdd/)
 - [Example Mapping](https://cucumber.io/blog/bdd/example-mapping-introduction/)
+- `features/PERSONAS.md` - Detailed persona profiles
+- `features/README.md` - Feature organization guide
