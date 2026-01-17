@@ -1,4 +1,4 @@
-@llm @integration
+@llm @integration @high
 Feature: LLM Integration
   As a developer using Graph of Thought
   I want to use LLM-based generators and evaluators

@@ -1,4 +1,4 @@
-@core @config
+@core @config @critical
 Feature: Configuration
   As a developer using Graph of Thought
   I want to configure the graph behavior

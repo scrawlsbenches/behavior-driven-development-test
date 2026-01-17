@@ -47,12 +47,12 @@ from .protocols import (
     HandoffPackage,
 )
 from .implementations import (
-    NullGovernanceService,
-    NullProjectManagementService,
-    NullResourceService,
-    NullKnowledgeService,
-    NullQuestionService,
-    NullCommunicationService,
+    InMemoryGovernanceService,
+    InMemoryProjectManagementService,
+    InMemoryResourceService,
+    InMemoryKnowledgeService,
+    InMemoryQuestionService,
+    InMemoryCommunicationService,
 )
 
 
@@ -156,13 +156,13 @@ class Orchestrator:
         questions: QuestionService | None = None,
         communication: CommunicationService | None = None,
     ):
-        # Use null implementations for missing services
-        self.governance = governance or NullGovernanceService()
-        self.project_management = project_management or NullProjectManagementService()
-        self.resources = resources or NullResourceService()
-        self.knowledge = knowledge or NullKnowledgeService()
-        self.questions = questions or NullQuestionService()
-        self.communication = communication or NullCommunicationService()
+        # Use in-memory implementations for missing services (testable defaults)
+        self.governance = governance or InMemoryGovernanceService()
+        self.project_management = project_management or InMemoryProjectManagementService()
+        self.resources = resources or InMemoryResourceService()
+        self.knowledge = knowledge or InMemoryKnowledgeService()
+        self.questions = questions or InMemoryQuestionService()
+        self.communication = communication or InMemoryCommunicationService()
         
         # Event handlers
         self._handlers: dict[OrchestratorEvent, list[Callable]] = {
@@ -206,7 +206,7 @@ class Orchestrator:
         
         return cls(
             governance=SimpleGovernanceService(),
-            project_management=NullProjectManagementService(),  # Needs external data
+            project_management=InMemoryProjectManagementService(),  # Needs external data
             resources=SimpleResourceService(),
             knowledge=knowledge,
             questions=questions,

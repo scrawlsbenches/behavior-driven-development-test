@@ -1,4 +1,4 @@
-@core @search @strategies
+@core @search @strategies @high
 Feature: Search Strategies
   As a developer using Graph of Thought
   I want to use different search strategies

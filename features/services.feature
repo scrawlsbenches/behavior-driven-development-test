@@ -1,28 +1,28 @@
-@services
+@services @high
 Feature: Service Implementations
   As a developer using Graph of Thought
   I want to use service implementations for governance, resources, and knowledge
   So that I can manage projects with proper controls
 
   # ===========================================================================
-  # Null Services (Pass-through implementations)
+  # InMemory Services (Testable implementations with configurable behavior)
   # ===========================================================================
-  # These are intentionally minimal - they allow the system to run without
-  # real service backends. No escape clauses needed; this is the design.
+  # These provide testable implementations that can be configured to behave
+  # like pass-through services or full-featured services with assertions.
 
-  Scenario: Null governance service auto-approves everything
-    Given a null governance service
+  Scenario: In-memory governance service auto-approves everything
+    Given an in-memory governance service
     When I check approval for action "deploy_production"
     Then the approval status should be "APPROVED"
 
-  Scenario: Null resource service has unlimited resources
-    Given a null resource service
+  Scenario: In-memory resource service has unlimited resources
+    Given an in-memory resource service
     When I check available tokens for project "test"
     Then resources should be available
     And remaining resources should be infinite
 
-  Scenario: Null knowledge service stores but finds nothing
-    Given a null knowledge service
+  Scenario: In-memory knowledge service stores but finds nothing
+    Given an in-memory knowledge service
     When I store a knowledge entry "Test knowledge"
     And I retrieve knowledge for "Test"
     Then no knowledge entries should be found
