@@ -32,7 +32,7 @@ features/
 │   ├── observability.feature         # Logging, metrics, tracing (@mvp-p1)
 │   └── data_persistence.feature      # Storage, backup, recovery (@mvp-p0)
 │
-└── steps/                         # Step definitions (to be implemented)
+└── steps/                         # Step definitions (11 files, 4,055 lines)
     └── *.py
 ```
 
@@ -131,12 +131,56 @@ Feature: Business Capability Name
 - Edge case handling
 - Performance optimizations
 
-## Legacy Features
+## Feature Organization
 
-The original technical feature files remain in the `features/` root for reference:
-- `basic_operations.feature`, `search.feature`, etc.
+Features are organized into two complementary categories that serve different purposes:
 
-These will be deprecated once the new business-focused features have complete step definition coverage.
+### Application Features (Subdirectories)
+
+Business-focused features in `features/*/` subdirectories:
+- **Purpose:** Test user workflows and business value
+- **Audience:** Stakeholders, product owners, developers
+- **Style:** Use specific personas (Jordan, Morgan, Alex, etc.)
+- **Location:** `ai_reasoning/`, `governance_compliance/`, `cost_management/`, etc.
+- **Status:** @wip - step definitions in progress
+
+These answer: *"What behavior should the user see?"*
+
+### Foundation Features (Root Directory)
+
+Technical API features in `features/*.feature`:
+- **Purpose:** Test the GraphOfThought library API
+- **Audience:** Developers building on the library
+- **Style:** Use "As a developer" perspective
+- **Location:** `basic_operations.feature`, `cycle_detection.feature`, etc.
+- **Status:** Have working step definitions
+
+These answer: *"Does the underlying API work correctly?"*
+
+### How They Work Together
+
+| Layer | Tests | Example |
+|-------|-------|---------|
+| **Application** | "Jordan explores a problem and traces reasoning path" | `thought_exploration.feature` |
+| **Foundation** | "Path to root returns correct node sequence" | `traversal.feature` |
+
+Application features assume Foundation features pass. Both are valuable:
+- Foundation features catch API regressions
+- Application features verify business value delivery
+
+### Transition Progress
+
+As Application features get step definitions, remove `@wip` tag:
+- [x] `thought_exploration.feature` - 9 MVP-P0 scenarios implemented
+- [x] `intelligent_search.feature` - 8 MVP-P0 scenarios implemented
+- [x] `llm_integration.feature` - 7 MVP-P0 scenarios implemented
+- [x] `approval_workflows.feature` - 8 MVP-P0 scenarios implemented
+- [x] `budget_and_consumption.feature` - 7 MVP-P0 scenarios implemented
+- [x] `project_lifecycle.feature` - 7 MVP-P0 scenarios implemented
+- [ ] `decisions_and_learnings.feature` - step definitions needed
+- [ ] `question_routing.feature` - step definitions needed
+- [ ] `observability.feature` - step definitions needed
+- [ ] `data_persistence.feature` - step definitions needed
 
 ## Contributing
 

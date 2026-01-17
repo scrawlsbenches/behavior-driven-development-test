@@ -41,6 +41,8 @@ Remember: Good BDD is about shared understanding first, automation second. Help 
 
 # CLAUDE.md - Behave BDD Guide for Graph of Thought
 
+> **Quick Start:** Run `./scripts/setup-dev.sh` after cloning to configure git hooks and dependencies.
+
 This document establishes BDD practices using the **behave** framework for the Graph of Thought enterprise application. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
 
 ## Project Overview
@@ -378,6 +380,45 @@ When adding a new feature:
 8. **Implement code** - Make steps pass
 9. **Refactor** - Clean up while tests stay green
 
+## Developer Tooling (Non-BDD)
+
+Some quality enforcement doesn't belong in behave features. These tools ensure codebase consistency but aren't user-facing behavior:
+
+### What Goes Where
+
+| Concern | Tool | Why |
+|---------|------|-----|
+| Business behavior | behave features | User-facing, needs personas |
+| Architecture rules | pytest + CI scripts | Developer tooling, no persona |
+| Code style | ruff/black | Automated formatting |
+| Type safety | mypy | Static analysis |
+
+### Architecture Enforcement
+
+```bash
+# Fast CI check - run before tests
+python scripts/check_architecture.py
+
+# Detailed pytest checks
+pytest tests/test_architecture.py -v
+```
+
+**Rules enforced:**
+- Protocols must be defined in `protocols.py`
+- Implementations must be in `implementations.py`
+- No global service instances
+- Business logic imports protocols, not implementations
+- Services injected via constructor, not instantiated directly
+
+### Why Not BDD for Architecture?
+
+BDD features answer: "What behavior should the user see?"
+Architecture tests answer: "Is the code organized correctly?"
+
+There's no persona for "the codebase itself." Architecture enforcement is internal developer tooling - same category as linting and type checking. Mixing it into behave features would dilute the business focus.
+
+**Rule of thumb:** If you can't identify a persona from `PERSONAS.md` who benefits from the behavior, it's probably developer tooling, not a BDD feature.
+
 ## Resources
 
 - [Behave Documentation](https://behave.readthedocs.io/)
@@ -386,3 +427,5 @@ When adding a new feature:
 - [Example Mapping](https://cucumber.io/blog/bdd/example-mapping-introduction/)
 - `features/PERSONAS.md` - Detailed persona profiles
 - `features/README.md` - Feature organization guide
+- `scripts/check_architecture.py` - Architecture enforcement (CI)
+- `tests/test_architecture.py` - Detailed architecture tests

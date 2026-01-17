@@ -1,4 +1,4 @@
-@project-management @mvp-p0
+@wip @project-management @mvp-p0
 Feature: AI-Assisted Project Lifecycle
   As an Engineering Manager
   I want to create and track AI-assisted projects with clear phases

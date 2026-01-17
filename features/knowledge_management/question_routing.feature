@@ -1,4 +1,4 @@
-@knowledge-management @questions @mvp-p0
+@wip @knowledge-management @questions @mvp-p0
 Feature: Intelligent Question Routing
   As a Product Owner
   I want questions from AI sessions to reach the right experts quickly

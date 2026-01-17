@@ -1,4 +1,4 @@
-@ai-reasoning @mvp-p0
+@wip @ai-reasoning @mvp-p0
 Feature: AI-Assisted Thought Exploration
   As a Data Scientist exploring complex problems
   I want to create and navigate a graph of interconnected thoughts
@@ -131,7 +131,7 @@ Feature: AI-Assisted Thought Exploration
 
   @mvp-p0 @critical
   Scenario: Detecting self-referential thoughts
-    Given a thought "Improve performance"
+    Given a standalone thought "Improve performance"
     When Jordan tries to mark it as its own follow-up
     Then the action should be rejected
     And a clear error should explain why

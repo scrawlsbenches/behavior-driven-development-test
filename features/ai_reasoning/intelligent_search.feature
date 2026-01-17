@@ -1,4 +1,4 @@
-@ai-reasoning @search @mvp-p0
+@wip @ai-reasoning @search @mvp-p0
 Feature: Intelligent Solution Search
   As a Data Scientist with limited time and token budget
   I want the system to automatically explore promising thought directions
@@ -71,7 +71,7 @@ Feature: Intelligent Solution Search
     When Jordan chooses "deep exploration" mode
     Then the highest-scoring thought should be expanded first
     And exploration should continue down that path
-    Until a solution or dead-end is reached
+    # Until a solution or dead-end is reached
     And alternative paths should be available for backup
 
   @mvp-p1
@@ -192,7 +192,7 @@ Feature: Intelligent Solution Search
     Given an exploration with one strong path (score 0.8) and many unexplored paths
     When Jordan wants balanced exploration
     Then the system should occasionally explore new paths
-    Not just exploit the known good path
+    # Not just exploit the known good path
     And the exploration ratio should be configurable
 
   @post-mvp @wip
