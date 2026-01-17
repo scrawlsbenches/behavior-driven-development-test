@@ -10,18 +10,24 @@ Feature: Knowledge Service
   # This feature tests TWO implementations:
   #
   # 1. IN-MEMORY KNOWLEDGE SERVICE (test double)
-  #    - Stores entries but retrieval always returns empty
-  #    - Use when you need isolated tests without knowledge lookup
+  #    - Stores entries (store() succeeds) but retrieval always returns empty list
+  #    - PURPOSE: Allows testing components that WRITE to knowledge without
+  #      triggering retrieval side effects. Useful for verifying that your code
+  #      correctly calls store() without needing actual knowledge lookup.
+  #    - Use when you need isolated tests without knowledge lookup influencing results
   #
   # 2. SIMPLE KNOWLEDGE SERVICE (lightweight implementation)
   #    - Stores and retrieves entries using keyword matching
-  #    - Use when testing actual knowledge storage behavior
+  #    - Use when testing actual knowledge storage and retrieval behavior
 
   # ===========================================================================
   # In-Memory Knowledge Service (Test Double)
   # ===========================================================================
 
-  Scenario: In-memory knowledge service stores entries without retrieval
+  Scenario: In-memory knowledge service accepts stores but returns empty on retrieval
+    # This test double is useful for testing code that stores knowledge
+    # without needing actual retrieval functionality. The store() call
+    # succeeds (doesn't throw), but retrieve() always returns an empty list.
     Given an in-memory knowledge service
     When I store a knowledge entry "Test knowledge"
     And I retrieve knowledge for "Test"

@@ -4,6 +4,27 @@ Feature: Collaborative Project
   I want to manage human-AI collaborative projects
   So that I can track questions, decisions, and work chunks
 
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # PROJECT: A graph-based representation of work. Contains nodes for requests,
+  #   questions, decisions, and chunks connected by relationships.
+  #
+  # NODE TYPES:
+  #   - REQUEST: Initial work request (e.g., "Build a REST API")
+  #   - QUESTION: Something that needs answering before work can proceed
+  #   - DECISION: A choice that was made (stored for future reference)
+  #   - CHUNK: A unit of work that can be executed in a session
+  #
+  # CHUNK STATUSES:
+  #   - READY: Chunk is planned and can be started
+  #   - IN_PROGRESS: Chunk is currently being worked on in an active session
+  #   - COMPLETED: Chunk work is finished
+  #   - BLOCKED: Chunk cannot proceed (e.g., waiting for question answer)
+  #
+  # SESSION: An active work period on a chunk. One session per chunk at a time.
+  #   Sessions track time, context, and produce handoffs when interrupted.
+
   Scenario: Creating a new project with a request
     Given a new collaborative project named "test_project"
     When I add a request "Build a REST API"

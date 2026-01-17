@@ -10,12 +10,28 @@ Feature: Governance Service
   # This feature tests TWO implementations:
   #
   # 1. IN-MEMORY GOVERNANCE SERVICE (test double)
-  #    - Auto-approves everything
+  #    - Auto-approves everything (always returns APPROVED)
   #    - Use when you need isolated tests without governance logic
   #
   # 2. SIMPLE GOVERNANCE SERVICE (lightweight implementation)
   #    - Enforces policies, records audits, manages approvals
   #    - Use when testing actual governance behavior
+  #
+  # APPROVAL STATUSES (from check_approval):
+  #   - "APPROVED": Action is allowed to proceed immediately
+  #   - "NEEDS_REVIEW": Action requires human approval before proceeding
+  #   - "DENIED": Action is explicitly forbidden by policy
+  #
+  # PENDING APPROVAL STATUSES (from approval workflow):
+  #   - "pending": Awaiting approver decision
+  #   - "approved": Approver granted the request
+  #   - "denied": Approver rejected the request
+  #   - "expired": Request timed out without decision (future)
+  #
+  # POLICY TYPES:
+  #   - "requires_review": Returns NEEDS_REVIEW, triggers approval workflow
+  #   - "deny": Returns DENIED, blocks the action
+  #   - "allow": Returns APPROVED (explicit allow, same as no policy)
 
   # ===========================================================================
   # In-Memory Governance Service (Test Double)

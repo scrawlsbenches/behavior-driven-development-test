@@ -4,9 +4,23 @@ Feature: Communication Service
   I want a communication service to manage context handoffs
   So that I can transfer work between AI and human collaborators seamlessly
 
-  # The communication service handles handoff packages between AI and humans,
-  # tracks intent history, records feedback, and manages context compression
-  # for efficient resumption of work.
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # HANDOFF PACKAGE: A structured bundle of context information transferred
+  #   between AI and human collaborators. Contains project state, intent history,
+  #   and any pending action items needed for seamless work continuation.
+  #
+  # HANDOFF TYPES:
+  #   - ai_to_human: AI transferring work to human (e.g., needs decision/approval)
+  #   - human_to_ai: Human delegating work to AI (e.g., implement this feature)
+  #
+  # INTENT: A recorded statement of what work is being done or planned.
+  #   Used to provide context when resuming work after interruption.
+  #
+  # CONTEXT COMPRESSION: Reducing history size while preserving key information.
+  #   Current implementation uses simple truncation (4 chars ≈ 1 token estimate).
+  #   Future: LLM-based summarization.
 
   Background:
     Given a simple communication service
@@ -25,7 +39,9 @@ Feature: Communication Service
     And I get resumption context for project "test_project"
     Then the context should contain "Implement user authentication"
 
-  Scenario: Communication service compresses long history
+  Scenario: Communication service compresses long history using truncation
+    # Note: Current compression uses simple truncation at ~4 characters per token.
+    # This is a placeholder until LLM-based summarization is implemented.
     Given a recorded intent "Build the API" for project "test_project"
     When I compress history for project "test_project" with max tokens 100
     Then the compressed history should not exceed 400 characters

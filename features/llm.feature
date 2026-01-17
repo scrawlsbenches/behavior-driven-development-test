@@ -5,6 +5,29 @@ Feature: LLM Integration
   So that I can leverage AI for thought generation and evaluation
 
   # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # GENERATOR: Creates new thoughts from a parent thought using LLM completion.
+  #   Returns a list of child thought strings.
+  #
+  # EVALUATOR: Scores a thought from 0.0 (poor) to 1.0 (excellent).
+  #   Scores are used for search prioritization and pruning decisions.
+  #
+  # VERIFIER: Checks if a thought is logically valid given its context.
+  #   Returns is_valid (bool), confidence (float), and issues (list).
+  #
+  # RESPONSE PARSING STRATEGY (in order of preference):
+  #   1. JSON: Parse as JSON array (generator) or object (evaluator/verifier)
+  #   2. Markdown code block: Extract JSON from ```json ... ``` blocks
+  #   3. Plain text: Line-by-line parsing or regex number extraction
+  #   4. Fallback: Default values if all parsing fails
+  #
+  # DEFAULT VALUES (when parsing fails):
+  #   - Evaluator score: 0.5 (neutral - neither promotes nor demotes the thought)
+  #   - Verifier is_valid: true (fail-open - don't block on parse errors)
+  #   - Verifier confidence: 0.5 (indicates uncertainty)
+
+  # ===========================================================================
   # Prompt Templates
   # ===========================================================================
 
@@ -116,7 +139,9 @@ Feature: LLM Integration
     When the LLM returns 'The thought scores 0.6 overall'
     Then the evaluation score should be 0.6
 
-  Scenario: Evaluator defaults to 0.5 for unparseable responses
+  Scenario: Evaluator defaults to neutral 0.5 score for unparseable responses
+    # 0.5 is used because it's neutral: doesn't favor or penalize the thought.
+    # This allows the search to continue without being biased by parse failures.
     Given a mock LLM evaluator
     When the LLM returns 'Cannot evaluate this thought'
     Then the evaluation score should be 0.5

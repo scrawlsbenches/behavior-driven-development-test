@@ -4,6 +4,29 @@ Feature: In-Memory Tracing Provider
   I want an in-memory tracing provider
   So that I can verify tracing behavior in tests without external dependencies
 
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # SPAN: A unit of work with a name, start time, duration, and optional metadata.
+  #   Spans form a tree structure representing the call hierarchy.
+  #
+  # SPAN ATTRIBUTES: Key-value metadata attached to a span (e.g., user_id, http.method)
+  #
+  # SPAN EVENTS: Timestamped log entries within a span (e.g., "cache_hit", "retry")
+  #
+  # SPAN STATUS: Final state of the operation:
+  #   - "OK": Operation completed successfully
+  #   - "ERROR": Operation failed (includes description of the error)
+  #   - "UNSET": No status explicitly set (default)
+  #
+  # ROOT SPAN: A span with no parent (top of the trace tree)
+  #
+  # TRACE: A collection of spans sharing a trace ID, representing a complete
+  #   request flow through the system.
+  #
+  # Note: This in-memory provider is for testing only. Production should use
+  # OpenTelemetry exporters (Jaeger, Zipkin, etc.) - see @wip scenarios.
+
   Background:
     Given an in-memory tracing provider
 

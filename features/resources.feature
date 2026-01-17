@@ -16,12 +16,23 @@ Feature: Resource Service
   # 2. SIMPLE RESOURCE SERVICE (lightweight implementation)
   #    - Tracks budgets, consumption, and enforces limits
   #    - Use when testing actual resource management behavior
+  #
+  # RESOURCE AVAILABILITY:
+  #   - "available" means is_available=True in the ResourceStatus response
+  #   - "infinite" means remaining=float('inf') (Python infinity)
+  #
+  # CONSUMPTION REJECTION:
+  #   - When consumption exceeds budget, consume() returns False
+  #   - No exception is raised; caller must check return value
+  #   - Rejected consumptions are not recorded in the consumption history
 
   # ===========================================================================
   # In-Memory Resource Service (Test Double)
   # ===========================================================================
 
   Scenario: In-memory resource service has unlimited resources
+    # The in-memory test double always returns available=True with infinite remaining.
+    # This allows tests to run without resource constraints.
     Given an in-memory resource service
     When I check available tokens for project "test"
     Then resources should be available

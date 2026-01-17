@@ -4,9 +4,26 @@ Feature: Question Service
   I want a question service to manage questions and answers
   So that I can route questions to the right people and track responses
 
-  # The question service manages the lifecycle of questions: creation, routing,
-  # answering, and priority management. Questions can be routed to teams
-  # based on keywords or auto-answered from a knowledge base.
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # QUESTION TICKET: A tracked question with status, priority, and routing info.
+  #   Statuses: "open" (awaiting answer), "answered" (response provided)
+  #
+  # PRIORITY LEVELS (highest to lowest):
+  #   - CRITICAL: Blocks all work, requires immediate response
+  #   - BLOCKING: Blocks current task, high urgency
+  #   - HIGH: Important but not immediately blocking
+  #   - MEDIUM: Normal priority (default)
+  #   - LOW: Can be answered when convenient
+  #
+  # ROUTING KEYWORDS (current naive implementation):
+  #   - "security" → routes to "security-team"
+  #   - "feature", "should we", "business" → routes to "product-owner"
+  #   - Default (no match) → routes to "human" for manual triage
+  #
+  # Note: This keyword matching is intentionally simple. See @wip scenarios
+  # for planned ML-based routing with context awareness.
 
   Background:
     Given a simple question service
@@ -21,11 +38,13 @@ Feature: Question Service
     And the ticket should have status "open"
     And the ticket should have priority "HIGH"
 
-  Scenario: Question service routes questions to security team
+  Scenario: Question service routes questions containing "security" to security team
+    # Routing trigger: question contains the keyword "security"
     When I ask a question "What are the security requirements?"
     Then the question should be routed to "security-team"
 
   Scenario: Question service routes business questions to product owner
+    # Routing trigger: question contains "should we" (decision request pattern)
     When I ask a question "Should we add this feature?"
     Then the question should be routed to "product-owner"
 

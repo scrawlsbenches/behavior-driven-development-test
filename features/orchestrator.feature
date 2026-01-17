@@ -5,6 +5,31 @@ Feature: Service Orchestrator
   So that I can manage cross-cutting concerns like governance and resources
 
   # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # ORCHESTRATOR: Central coordinator that routes events through governance,
+  #   resources, knowledge, and communication services. Acts as single entry
+  #   point for service interactions.
+  #
+  # EVENTS: Lifecycle signals that trigger orchestrator actions:
+  #   - CHUNK_STARTED: Work unit begins (triggers governance check, resource check)
+  #   - CHUNK_COMPLETED: Work unit ends (records resource consumption)
+  #   - QUESTION_ASKED: Question submitted (routes to appropriate team)
+  #   - QUESTION_ANSWERED: Answer provided (captures as knowledge)
+  #   - SESSION_STARTED: New session begins (provides resumption context)
+  #   - CONTEXT_COMPACTING: Context window full (creates handoff)
+  #
+  # RESPONSE FIELDS:
+  #   - allow_proceeding: bool - whether the action can continue
+  #   - reason: str - explanation if blocked
+  #   - approval_id: str - ID for pending approval workflow (if needs review)
+  #   - warnings: list - non-blocking concerns (e.g., low budget)
+  #
+  # WARNING THRESHOLDS:
+  #   - Resource warnings trigger when remaining budget < 1000 tokens (hardcoded)
+  #   - Future: Configurable percentage-based thresholds
+
+  # ===========================================================================
   # Orchestrator Setup
   # ===========================================================================
 
@@ -43,7 +68,9 @@ Feature: Service Orchestrator
     And an approval ID should be provided
     And the reason should mention "Requires approval"
 
-  Scenario: Resource warnings when budget is low
+  Scenario: Resource warnings when budget is below 1000 token threshold
+    # Warning threshold is hardcoded at 1000 tokens. Budgets below this
+    # trigger a warning but don't block the action (allow_proceeding=True).
     Given a simple orchestrator
     And an orchestrator token budget of 500 for project "test"
     When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
@@ -92,6 +119,9 @@ Feature: Service Orchestrator
   # ===========================================================================
 
   Scenario: Preparing for context compaction
+    # Compaction content is a summary string of the current project state
+    # including recorded intents, pending questions, and recent decisions.
+    # This is used to restore context after the LLM context window is cleared.
     Given a simple orchestrator
     And recorded intent "Build API" for project "test"
     When I handle a CONTEXT_COMPACTING event for project "test"

@@ -4,10 +4,31 @@ Feature: Search Algorithms
   I want to search through the reasoning graph
   So that I can find optimal solution paths
 
+  # ===========================================================================
+  # TERMINOLOGY
+  # ===========================================================================
+  # SEARCH RESULT: Contains best_path (list of thoughts), termination_reason,
+  #   and stats (expansions count, max depth reached, etc.)
+  #
+  # TERMINATION REASONS:
+  #   - "completed": Search exhausted all frontier nodes (no more to expand)
+  #   - "max_depth": Reached configured maximum depth limit
+  #   - "max_expansions": Reached configured expansion count limit
+  #   - "goal_reached": Found a thought satisfying the goal predicate
+  #   - "timeout": Search exceeded time limit (if configured)
+  #
+  # BEAM SEARCH: Keeps top-k candidates at each depth level (k = beam_width).
+  #   More memory-efficient than best-first but may miss optimal paths.
+  #
+  # BEST-FIRST SEARCH: Always expands highest-scoring frontier node.
+  #   Finds optimal path but may use more memory.
+
   Background:
     Given a test graph with evaluator and generator
 
-  Scenario: Beam search finds a path
+  Scenario: Beam search terminates with valid reason
+    # Note: Exact termination reason depends on graph structure and limits.
+    # This test verifies the search completes with one of the valid reasons.
     Given a thought "Start" exists
     When I run beam search
     Then the search should return a result
