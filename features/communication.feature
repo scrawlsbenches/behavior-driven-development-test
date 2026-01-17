@@ -4,10 +4,6 @@ Feature: Communication Service
   I want a communication service to manage context handoffs
   So that I can transfer work between AI and human collaborators seamlessly
 
-  # The communication service handles handoff packages between AI and humans,
-  # tracks intent history, records feedback, and manages context compression
-  # for efficient resumption of work.
-
   Background:
     Given a simple communication service
 
@@ -25,7 +21,7 @@ Feature: Communication Service
     And I get resumption context for project "test_project"
     Then the context should contain "Implement user authentication"
 
-  Scenario: Communication service compresses long history
+  Scenario: Communication service compresses long history using truncation
     Given a recorded intent "Build the API" for project "test_project"
     When I compress history for project "test_project" with max tokens 100
     Then the compressed history should not exceed 400 characters
@@ -82,20 +78,39 @@ Feature: Communication Service
     And each action item should have assignee information
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Handoff Type Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Intent and feedback storage is in-memory only.
-  # Current: All state lost on restart.
-  # Requires: Database persistence for intents, feedback, handoffs.
-  #
-  # ESCAPE CLAUSE: Handoff is simplified version.
-  # Current: Basic package with project, type, context.
-  # Requires: Full handoff with attachments, thread history, action items.
-  #
-  # ESCAPE CLAUSE: Feedback is stored but not used for learning.
-  # Current: Feedback recorded but never analyzed.
-  # Requires: Feedback analysis, model fine-tuning pipeline.
-  #
-  # ESCAPE CLAUSE: Compression is truncation, not summarization.
-  # Current: Simply truncates history to max_tokens * 4 chars.
-  # Requires: LLM-based summarization preserving key information.
+
+  @wip
+  Scenario: Creating a human_to_ai handoff delegates work to AI
+    When I create a handoff for project "test_project" of type "human_to_ai"
+    Then a handoff package should be created
+    And the handoff should have type "human_to_ai"
+
+  @wip
+  Scenario: Handoff package contains project state
+    Given recorded intent "Build API" for project "test_project"
+    When I create a handoff for project "test_project" of type "ai_to_human"
+    Then the handoff should contain project state
+    And the handoff should contain intent history
+
+  # ===========================================================================
+  # Compression Behavior Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: Compression uses 4 character per token ratio
+    Given a recorded intent with 1000 characters for project "test_project"
+    When I compress history for project "test_project" with max tokens 100
+    Then the compressed history should not exceed 400 characters
+
+  @wip
+  Scenario: Compression truncates from the beginning to preserve recent context
+    Given recorded intents for project "test_project":
+      | intent                    |
+      | First: Set up project     |
+      | Second: Design API        |
+      | Third: Implement auth     |
+    When I compress history for project "test_project" with max tokens 50
+    Then the compressed history should contain "Implement auth"
+    And the compressed history should not contain "Set up project"

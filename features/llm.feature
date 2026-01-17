@@ -116,7 +116,7 @@ Feature: LLM Integration
     When the LLM returns 'The thought scores 0.6 overall'
     Then the evaluation score should be 0.6
 
-  Scenario: Evaluator defaults to 0.5 for unparseable responses
+  Scenario: Evaluator defaults to neutral 0.5 score for unparseable responses
     Given a mock LLM evaluator
     When the LLM returns 'Cannot evaluate this thought'
     Then the evaluation score should be 0.5
@@ -261,28 +261,60 @@ Feature: LLM Integration
     And the most recent items should be prioritized
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Response Parsing Order Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Only Claude provider implemented.
-  # Current: ClaudeGenerator, ClaudeEvaluator, ClaudeVerifier only.
-  # Requires: OpenAI, local models (Ollama), Azure OpenAI implementations.
-  #
-  # ESCAPE CLAUSE: No streaming responses.
-  # Current: Waits for complete response before processing.
-  # Requires: Async generators yielding partial thoughts as they arrive.
-  #
-  # ESCAPE CLAUSE: No retry/backoff logic.
-  # Current: Single attempt, fails on any error.
-  # Requires: Exponential backoff, rate limit handling, timeout config.
-  #
-  # ESCAPE CLAUSE: No response caching.
-  # Current: Every call hits the LLM API.
-  # Requires: Cache layer (Redis/in-memory) with TTL, cache key generation.
-  #
-  # ESCAPE CLAUSE: No cost tracking.
-  # Current: Token usage not tracked or reported.
-  # Requires: Token counting, cost calculation per model, budget integration.
-  #
-  # ESCAPE CLAUSE: Context truncation is basic.
-  # Current: Takes last 5 path items, truncates each to 50 chars.
-  # Requires: Token-aware truncation, importance-based selection.
+
+  @wip
+  Scenario: Generator tries JSON parsing before line parsing
+    Given a mock LLM generator
+    When the LLM returns '["thought 1", "thought 2"]'
+    Then the generator should use JSON parsing
+    And not fall back to line parsing
+
+  @wip
+  Scenario: Generator extracts JSON from markdown code blocks
+    Given a mock LLM generator
+    When the LLM returns 'Here are the thoughts:\n```json\n["idea A"]\n```'
+    Then the generator should extract the JSON from the code block
+    And produce 1 thought
+
+  # ===========================================================================
+  # Default Value Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: Evaluator score 0.5 is neutral in search prioritization
+    Given a mock LLM evaluator that returns 0.5 for all thoughts
+    And a search with two candidate thoughts
+    Then neither thought should be prioritized over the other
+
+  @wip
+  Scenario: Verifier defaults to valid to avoid blocking on parse errors
+    Given a mock LLM verifier
+    When the LLM returns unparseable response
+    Then the verification should be valid
+    And the thought should not be blocked
+
+  @wip
+  Scenario: Verifier defaults to 0.5 confidence indicating uncertainty
+    Given a mock LLM verifier
+    When the LLM returns unparseable response
+    Then the verification confidence should be 0.5
+
+  # ===========================================================================
+  # Context Truncation Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: Current context truncation uses last 5 path items
+    Given a mock LLM generator
+    And a path with 10 items
+    When I generate thoughts
+    Then only the last 5 path items should be included in context
+
+  @wip
+  Scenario: Current context truncation limits each item to 50 characters
+    Given a mock LLM generator
+    And a path item with 100 characters
+    When I generate thoughts
+    Then the path item should be truncated to 50 characters in context

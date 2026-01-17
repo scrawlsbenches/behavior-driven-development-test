@@ -5,19 +5,6 @@ Feature: Governance Service
   So that I can control what actions are allowed in my application
 
   # ===========================================================================
-  # TERMINOLOGY
-  # ===========================================================================
-  # This feature tests TWO implementations:
-  #
-  # 1. IN-MEMORY GOVERNANCE SERVICE (test double)
-  #    - Auto-approves everything
-  #    - Use when you need isolated tests without governance logic
-  #
-  # 2. SIMPLE GOVERNANCE SERVICE (lightweight implementation)
-  #    - Enforces policies, records audits, manages approvals
-  #    - Use when testing actual governance behavior
-
-  # ===========================================================================
   # In-Memory Governance Service (Test Double)
   # ===========================================================================
 
@@ -100,16 +87,50 @@ Feature: Governance Service
     And the export should be valid PolicyDefinition format
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Approval Status Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Rule-based, not workflow-based.
-  # Current: Policies are simple allow/deny/review rules checked synchronously.
-  # Requires: Workflow engine for multi-step approvals, escalation, timeouts.
-  #
-  # ESCAPE CLAUSE: Callable policies not fully implemented.
-  # Current: Callable policies exist but aren't invoked with full context.
-  # Requires: Pass action context, actor info, and environment to callables.
-  #
-  # ESCAPE CLAUSE: Policy format is undefined.
-  # Current: Returns raw dicts from get_policies().
-  # Requires: Define PolicyDefinition dataclass with validation.
+
+  @wip
+  Scenario: Deny policy returns DENIED status
+    Given a simple governance service
+    And a policy "delete_production" denies all
+    When I check approval for action "delete_production"
+    Then the approval status should be "DENIED"
+
+  @wip
+  Scenario: Allow policy explicitly approves action
+    Given a simple governance service
+    And a policy "read_data" allows all
+    When I check approval for action "read_data"
+    Then the approval status should be "APPROVED"
+
+  # ===========================================================================
+  # Pending Approval Status Transitions
+  # ===========================================================================
+
+  @wip
+  Scenario: Approver can deny a pending request
+    Given a simple governance service
+    When I request approval for action "deploy" with justification "New feature"
+    And the approval is denied by "admin" with reason "Not ready for production"
+    Then the pending approval status should be "denied"
+
+  @wip
+  Scenario: Pending approval starts in pending status
+    Given a simple governance service
+    When I request approval for action "deploy" with justification "New feature"
+    Then the pending approval status should be "pending"
+
+  # ===========================================================================
+  # Multi-Step Approval Workflow
+  # ===========================================================================
+
+  @wip
+  Scenario: Multi-step approval requires all approvers
+    Given a simple governance service
+    And a policy "production_deploy" requires approval from "tech-lead" and "security"
+    When I request approval for action "production_deploy"
+    And "tech-lead" approves the request
+    Then the pending approval status should be "pending"
+    When "security" approves the request
+    Then the pending approval status should be "approved"
