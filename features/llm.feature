@@ -5,34 +5,6 @@ Feature: LLM Integration
   So that I can leverage AI for thought generation and evaluation
 
   # ===========================================================================
-  # FEATURE-LEVEL ESCAPE CLAUSES
-  # ===========================================================================
-  # ESCAPE CLAUSE: Only Claude provider implemented.
-  # Current: ClaudeGenerator, ClaudeEvaluator, ClaudeVerifier only.
-  # Requires: OpenAI, local models (Ollama), Azure OpenAI implementations.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No streaming responses.
-  # Current: Waits for complete response before processing.
-  # Requires: Async generators yielding partial thoughts as they arrive.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No retry/backoff logic.
-  # Current: Single attempt, fails on any error.
-  # Requires: Exponential backoff, rate limit handling, timeout config.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No response caching.
-  # Current: Every call hits the LLM API.
-  # Requires: Cache layer (Redis/in-memory) with TTL, cache key generation.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No cost tracking.
-  # Current: Token usage not tracked or reported.
-  # Requires: Token counting, cost calculation per model, budget integration.
-  # Depends: Resource service integration
-
-  # ===========================================================================
   # Prompt Templates
   # ===========================================================================
 
@@ -77,10 +49,6 @@ Feature: LLM Integration
   # ===========================================================================
   # Response Parsing - Generator
   # ===========================================================================
-  # ESCAPE CLAUSE: Context truncation is basic.
-  # Current: Takes last 5 path items, truncates each to 50 chars.
-  # Requires: Token-aware truncation, importance-based selection.
-  # Depends: Token counting implementation
 
   Scenario: Generator parses JSON array response
     Given a mock LLM generator
@@ -272,3 +240,49 @@ Feature: LLM Integration
     When the LLM takes 10 seconds to respond
     Then a timeout error should be raised
     And the error should be retryable
+
+  # ===========================================================================
+  # Streaming and Context (TODO: Implement)
+  # ===========================================================================
+
+  @wip
+  Scenario: Generator streams partial thoughts as they arrive
+    Given a mock LLM generator with streaming enabled
+    When I generate thoughts from "Complex problem"
+    Then partial thoughts should be yielded as they arrive
+    And the final result should contain all thoughts
+
+  @wip
+  Scenario: Generator uses token-aware context truncation
+    Given a mock LLM generator with max context tokens 1000
+    And a path with 20 items totaling 2000 tokens
+    When I generate thoughts
+    Then the context should be truncated to fit within 1000 tokens
+    And the most recent items should be prioritized
+
+  # ===========================================================================
+  # Known Limitations (Escape Clauses)
+  # ===========================================================================
+  # ESCAPE CLAUSE: Only Claude provider implemented.
+  # Current: ClaudeGenerator, ClaudeEvaluator, ClaudeVerifier only.
+  # Requires: OpenAI, local models (Ollama), Azure OpenAI implementations.
+  #
+  # ESCAPE CLAUSE: No streaming responses.
+  # Current: Waits for complete response before processing.
+  # Requires: Async generators yielding partial thoughts as they arrive.
+  #
+  # ESCAPE CLAUSE: No retry/backoff logic.
+  # Current: Single attempt, fails on any error.
+  # Requires: Exponential backoff, rate limit handling, timeout config.
+  #
+  # ESCAPE CLAUSE: No response caching.
+  # Current: Every call hits the LLM API.
+  # Requires: Cache layer (Redis/in-memory) with TTL, cache key generation.
+  #
+  # ESCAPE CLAUSE: No cost tracking.
+  # Current: Token usage not tracked or reported.
+  # Requires: Token counting, cost calculation per model, budget integration.
+  #
+  # ESCAPE CLAUSE: Context truncation is basic.
+  # Current: Takes last 5 path items, truncates each to 50 chars.
+  # Requires: Token-aware truncation, importance-based selection.

@@ -5,35 +5,6 @@ Feature: Observability
   So that I can monitor and debug my application
 
   # ===========================================================================
-  # FEATURE-LEVEL ESCAPE CLAUSES
-  # ===========================================================================
-  # RESOLVED: In-memory tracing implemented via InMemoryTracingProvider class.
-  # InMemoryTracingProvider stores spans in memory for testing and debugging.
-  # See features/tracing.feature for detailed tracing specifications.
-  #
-  # ESCAPE CLAUSE: No OpenTelemetry/Jaeger integration.
-  # Current: InMemoryTracingProvider for testing only.
-  # Requires: OpenTelemetry SDK, span exporters, trace context propagation.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No Prometheus/StatsD integration.
-  # Current: InMemoryMetricsCollector for testing only.
-  # Requires: Prometheus client, StatsD client, metric exposition endpoint.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: Decorators only log to debug level.
-  # Current: @timed and @counted log to logging.debug().
-  # Requires: Integration with metrics collectors, configurable log levels.
-  # Depends: Metrics registry integration
-  #
-  # RESOLVED: Structured logging implemented via StructuredLogger class.
-  # StructuredLogger outputs JSON with context binding support.
-  # Use StructuredLogger(output=StringIO()) for testing, or output to stderr in production.
-  #
-  # MOVED: InMemoryMetricsCollector scenarios moved to features/metrics_collector.feature
-  # See that file for testing-focused metrics collector specifications.
-
-  # ===========================================================================
   # Logging Setup
   # ===========================================================================
 
@@ -318,3 +289,24 @@ Feature: Observability
     And an alert "high_error_rate" with 5 minute cooldown
     When the alert triggers twice within 1 minute
     Then only 1 alert notification should be sent
+
+  # ===========================================================================
+  # Known Limitations (Escape Clauses)
+  # ===========================================================================
+  # RESOLVED: In-memory tracing implemented via InMemoryTracingProvider class.
+  # See features/tracing.feature for detailed tracing specifications.
+  #
+  # RESOLVED: Structured logging implemented via StructuredLogger class.
+  # StructuredLogger outputs JSON with context binding support.
+  #
+  # ESCAPE CLAUSE: No OpenTelemetry/Jaeger integration.
+  # Current: InMemoryTracingProvider for testing only.
+  # Requires: OpenTelemetry SDK, span exporters, trace context propagation.
+  #
+  # ESCAPE CLAUSE: No Prometheus/StatsD integration.
+  # Current: InMemoryMetricsCollector for testing only.
+  # Requires: Prometheus client, StatsD client, metric exposition endpoint.
+  #
+  # ESCAPE CLAUSE: Decorators only log to debug level.
+  # Current: @timed and @counted log to logging.debug().
+  # Requires: Integration with metrics collectors, configurable log levels.

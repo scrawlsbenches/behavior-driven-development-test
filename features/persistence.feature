@@ -16,7 +16,7 @@ Feature: Persistence
     And a thought "Root" exists with score 0.5
     When I save the graph with id "<graph_id>" and metadata "<meta_key>" = <meta_value>
     And I load the graph with id "<graph_id>"
-    Then the loaded graph should have <thought_count> thought
+    Then the loaded graph should have <thought_count> thoughts
     And the loaded metadata should have "<meta_key>" = <meta_value>
 
   Examples:

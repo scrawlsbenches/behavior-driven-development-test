@@ -5,33 +5,10 @@ Feature: Service Orchestrator
   So that I can manage cross-cutting concerns like governance and resources
 
   # ===========================================================================
-  # FEATURE-LEVEL ESCAPE CLAUSES
-  # ===========================================================================
-  # ESCAPE CLAUSE: Event handling is synchronous.
-  # Current: All events processed sequentially, blocking the caller.
-  # Requires: Async event queue, background workers, event prioritization.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: Metrics are basic counters.
-  # Current: Simple dict-based counters for event types.
-  # Requires: Prometheus/StatsD integration, histograms, percentiles.
-  # Depends: Observability infrastructure
-  #
-  # ESCAPE CLAUSE: Error handling is basic.
-  # Current: Errors logged and re-raised, no recovery strategies.
-  # Requires: Circuit breakers, retry policies, dead letter queues.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: Limited without real project management integration.
-  # Current: Project context is just IDs, no real PM system connection.
-  # Requires: Jira/Linear/GitHub integration for project state.
-  # Depends: None
-
-  # ===========================================================================
   # Orchestrator Setup
   # ===========================================================================
 
-  Scenario: Creating orchestrator with null services
+  Scenario: Creating orchestrator with default services
     Given a default orchestrator
     Then the orchestrator should have governance service
     And the orchestrator should have resource service
@@ -81,15 +58,6 @@ Feature: Service Orchestrator
   # ===========================================================================
   # Event Handling - Knowledge Events
   # ===========================================================================
-  # ESCAPE CLAUSE: Converting KnowledgeEntry back to Decision not implemented.
-  # Current: Answers stored as plain knowledge entries, not typed decisions.
-  # Requires: Entry type detection, Decision reconstruction from entry.
-  # Depends: None
-  #
-  # ESCAPE CLAUSE: No confidence scoring for captured knowledge.
-  # Current: All captured knowledge has implicit confidence of 1.0.
-  # Requires: Confidence extraction from answer quality, source reliability.
-  # Depends: LLM evaluation integration
 
   Scenario: Capturing answers as knowledge
     Given a simple orchestrator
@@ -103,10 +71,6 @@ Feature: Service Orchestrator
 
   # --- Knowledge Edge Cases (TODO: Implement) ---
 
-  # ESCAPE CLAUSE: Not capturing consequences in recorded decisions.
-  # Current: Decision consequences field is always empty list.
-  # Requires: Extract consequences from context, track actual outcomes.
-  # Depends: Decision outcome tracking in knowledge service
   @wip
   Scenario: Orchestrator captures decision consequences
     Given a simple orchestrator
@@ -261,3 +225,70 @@ Feature: Service Orchestrator
     When I handle a CHUNK_COMPLETED event for project "test" with 1000 tokens used
     Then the token consumption should be recorded
     And the metrics should show 1 retry
+
+  # ===========================================================================
+  # Async and Integration (TODO: Implement)
+  # ===========================================================================
+
+  @wip
+  Scenario: Orchestrator processes events asynchronously
+    Given a simple orchestrator with async event queue
+    When I handle 10 CHUNK_STARTED events rapidly
+    Then events should be queued for background processing
+    And the caller should not be blocked
+    And all events should eventually be processed
+
+  @wip
+  Scenario: Orchestrator integrates with external project management
+    Given a simple orchestrator with Jira integration
+    And a Jira project "PROJ-123" with status "In Progress"
+    When I handle a CHUNK_STARTED event for project "PROJ-123" chunk "chunk1"
+    Then the response should include Jira project status
+    And blocked issues should be flagged
+
+  @wip
+  Scenario: Orchestrator assigns confidence to captured knowledge
+    Given a simple orchestrator
+    And a question "What database?" answered by expert "senior-architect"
+    When I handle a QUESTION_ANSWERED event with answer "PostgreSQL"
+    Then the knowledge entry should have confidence based on source reliability
+    And the expert's track record should influence confidence
+
+  @wip
+  Scenario: Orchestrator converts answers back to typed decisions
+    Given a simple orchestrator
+    And an answered question about "Which framework to use?"
+    When I retrieve knowledge for "framework"
+    Then the entry should be reconstructable as a Decision
+    And include the original question context
+
+  # ===========================================================================
+  # Known Limitations (Escape Clauses)
+  # ===========================================================================
+  # ESCAPE CLAUSE: Event handling is synchronous.
+  # Current: All events processed sequentially, blocking the caller.
+  # Requires: Async event queue, background workers, event prioritization.
+  #
+  # ESCAPE CLAUSE: Metrics are basic counters.
+  # Current: Simple dict-based counters for event types.
+  # Requires: Prometheus/StatsD integration, histograms, percentiles.
+  #
+  # ESCAPE CLAUSE: Error handling is basic.
+  # Current: Errors logged and re-raised, no recovery strategies.
+  # Requires: Circuit breakers, retry policies, dead letter queues.
+  #
+  # ESCAPE CLAUSE: Limited without real project management integration.
+  # Current: Project context is just IDs, no real PM system connection.
+  # Requires: Jira/Linear/GitHub integration for project state.
+  #
+  # ESCAPE CLAUSE: Converting KnowledgeEntry back to Decision not implemented.
+  # Current: Answers stored as plain knowledge entries, not typed decisions.
+  # Requires: Entry type detection, Decision reconstruction from entry.
+  #
+  # ESCAPE CLAUSE: No confidence scoring for captured knowledge.
+  # Current: All captured knowledge has implicit confidence of 1.0.
+  # Requires: Confidence extraction from answer quality, source reliability.
+  #
+  # ESCAPE CLAUSE: Not capturing consequences in recorded decisions.
+  # Current: Decision consequences field is always empty list.
+  # Requires: Extract consequences from context, track actual outcomes.
