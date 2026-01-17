@@ -175,6 +175,7 @@ As Application features get step definitions, remove `@wip` tag:
 - [x] `intelligent_search.feature` - 8 MVP-P0 scenarios implemented
 - [x] `llm_integration.feature` - 7 MVP-P0 scenarios implemented
 - [x] `approval_workflows.feature` - 8 MVP-P0 scenarios implemented
+- [x] `budget_and_consumption.feature` - 7 MVP-P0 scenarios implemented
 - [ ] Other Application features - step definitions needed
 
 ## Contributing

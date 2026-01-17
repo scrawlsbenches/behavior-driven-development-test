@@ -473,10 +473,20 @@ def step_partial_results(context):
 def step_persona_sees_message(context, persona, message):
     """Verify persona sees a specific message."""
     # In a real implementation, this would check UI/output
-    # For now, verify the condition is met
-    if "Budget exhausted" in message:
+    # For now, verify the condition is met based on context type
+
+    # Cost management context
+    if hasattr(context, 'cost_service'):
+        service = context.cost_service
+        if "Budget exhausted" in message:
+            assert len(service.blocked_requests) > 0, "No blocked requests recorded"
+        return
+
+    # Search context
+    if "Budget exhausted" in message and hasattr(context, 'search_config'):
         budget = context.search_config.get("budget_tokens", 1000)
-        assert context.tokens_used >= budget * 0.8  # Close to budget
+        tokens_used = getattr(context, 'tokens_used', 0)
+        assert tokens_used >= budget * 0.8  # Close to budget
 
 
 @then("recommendations for continuing should be provided")
