@@ -12,36 +12,20 @@ from behave import given, when, then, use_step_matcher
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
-from enum import Enum
+
+# Import enums from domain layer to avoid duplicate definitions
+from graph_of_thought.domain.enums import (
+    QuestionPriority,
+    QuestionStatus,
+    ChunkStatus,
+)
 
 use_step_matcher("parse")
 
 
 # =============================================================================
-# Domain Models
+# BDD-Specific Models (use domain enums)
 # =============================================================================
-
-class QuestionPriority(Enum):
-    LOW = "low"
-    NORMAL = "normal"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-class QuestionStatus(Enum):
-    PENDING = "pending"
-    ASSIGNED = "assigned"
-    ANSWERED = "answered"
-    CLOSED = "closed"
-
-
-class ChunkStatus(Enum):
-    ACTIVE = "active"
-    BLOCKED = "blocked"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-
 
 @dataclass
 class Decision:

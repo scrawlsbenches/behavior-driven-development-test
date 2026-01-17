@@ -17,27 +17,24 @@ from datetime import datetime, timedelta
 from enum import Enum
 import uuid
 
+# Import shared enums from domain layer
+from graph_of_thought.domain.enums import ChunkStatus
+
 use_step_matcher("parse")
 
 
 # =============================================================================
-# Domain Models for Project Management
+# BDD-Specific Models (use domain enums where applicable)
 # =============================================================================
 
 class ProjectStatus(Enum):
+    """BDD-specific project status (different from domain.ProjectStatus)."""
     DRAFT = "draft"
     ACTIVE = "active"
     IN_PROGRESS = "in progress"
     PAUSED = "paused"
     COMPLETED = "completed"
     ARCHIVED = "archived"
-
-
-class ChunkStatus(Enum):
-    ACTIVE = "active"
-    PAUSED = "paused"
-    BLOCKED = "blocked"
-    COMPLETED = "completed"
 
 
 @dataclass
