@@ -4,29 +4,6 @@ Feature: In-Memory Tracing Provider
   I want an in-memory tracing provider
   So that I can verify tracing behavior in tests without external dependencies
 
-  # ===========================================================================
-  # TERMINOLOGY
-  # ===========================================================================
-  # SPAN: A unit of work with a name, start time, duration, and optional metadata.
-  #   Spans form a tree structure representing the call hierarchy.
-  #
-  # SPAN ATTRIBUTES: Key-value metadata attached to a span (e.g., user_id, http.method)
-  #
-  # SPAN EVENTS: Timestamped log entries within a span (e.g., "cache_hit", "retry")
-  #
-  # SPAN STATUS: Final state of the operation:
-  #   - "OK": Operation completed successfully
-  #   - "ERROR": Operation failed (includes description of the error)
-  #   - "UNSET": No status explicitly set (default)
-  #
-  # ROOT SPAN: A span with no parent (top of the trace tree)
-  #
-  # TRACE: A collection of spans sharing a trace ID, representing a complete
-  #   request flow through the system.
-  #
-  # Note: This in-memory provider is for testing only. Production should use
-  # OpenTelemetry exporters (Jaeger, Zipkin, etc.) - see @wip scenarios.
-
   Background:
     Given an in-memory tracing provider
 
@@ -247,16 +224,59 @@ Feature: In-Memory Tracing Provider
     Then only sampled spans should be captured
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Span Status Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: No OpenTelemetry integration.
-  # Current: InMemoryTracingProvider stores spans locally for testing.
-  # Requires: OpenTelemetry SDK, span exporters, trace context propagation.
-  #
-  # ESCAPE CLAUSE: No distributed trace context propagation.
-  # Current: Parent-child relationships tracked within single process.
-  # Requires: W3C trace context headers, cross-service propagation.
-  #
-  # ESCAPE CLAUSE: No span sampling or filtering.
-  # Current: All spans are captured.
-  # Requires: Sampling configuration, head/tail-based sampling.
+
+  @wip
+  Scenario: Span status defaults to UNSET
+    When I start a span "new_span"
+    Then the span "new_span" should have status "UNSET"
+
+  @wip
+  Scenario: Span status OK indicates successful completion
+    When I start a span "success_span"
+    And I set status "OK" on span "success_span"
+    Then the span "success_span" should have status "OK"
+
+  @wip
+  Scenario: Span status ERROR includes description
+    When I start a span "error_span"
+    And I set status "ERROR" with description "Connection refused" on span "error_span"
+    Then the span "error_span" should have status "ERROR"
+    And the status description should be "Connection refused"
+
+  # ===========================================================================
+  # Root Span Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: Spans without parents are root spans
+    When I start a span "root_span" without explicit parent
+    Then the span "root_span" should be a root span
+    And the span "root_span" should have no parent
+
+  @wip
+  Scenario: Root spans start new traces
+    When I start a span "root_span"
+    Then the span "root_span" should have a unique trace ID
+
+  # ===========================================================================
+  # Trace Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: All spans in a trace share the same trace ID
+    When I start a span "parent"
+    And I start a child span "child" under "parent"
+    And I start a child span "grandchild" under "child"
+    Then all three spans should have the same trace ID
+
+  @wip
+  Scenario: Trace forms a tree structure of spans
+    When I start a span "root"
+    And I start a child span "branch1" under "root"
+    And I start a child span "branch2" under "root"
+    And I start a child span "leaf" under "branch1"
+    Then the trace should form a tree with "root" as root
+    And "root" should have 2 children
+    And "branch1" should have 1 child

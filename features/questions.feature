@@ -4,27 +4,6 @@ Feature: Question Service
   I want a question service to manage questions and answers
   So that I can route questions to the right people and track responses
 
-  # ===========================================================================
-  # TERMINOLOGY
-  # ===========================================================================
-  # QUESTION TICKET: A tracked question with status, priority, and routing info.
-  #   Statuses: "open" (awaiting answer), "answered" (response provided)
-  #
-  # PRIORITY LEVELS (highest to lowest):
-  #   - CRITICAL: Blocks all work, requires immediate response
-  #   - BLOCKING: Blocks current task, high urgency
-  #   - HIGH: Important but not immediately blocking
-  #   - MEDIUM: Normal priority (default)
-  #   - LOW: Can be answered when convenient
-  #
-  # ROUTING KEYWORDS (current naive implementation):
-  #   - "security" → routes to "security-team"
-  #   - "feature", "should we", "business" → routes to "product-owner"
-  #   - Default (no match) → routes to "human" for manual triage
-  #
-  # Note: This keyword matching is intentionally simple. See @wip scenarios
-  # for planned ML-based routing with context awareness.
-
   Background:
     Given a simple question service
 
@@ -39,12 +18,10 @@ Feature: Question Service
     And the ticket should have priority "HIGH"
 
   Scenario: Question service routes questions containing "security" to security team
-    # Routing trigger: question contains the keyword "security"
     When I ask a question "What are the security requirements?"
     Then the question should be routed to "security-team"
 
   Scenario: Question service routes business questions to product owner
-    # Routing trigger: question contains "should we" (decision request pattern)
     When I ask a question "Should we add this feature?"
     Then the question should be routed to "product-owner"
 
@@ -106,16 +83,55 @@ Feature: Question Service
     And prefer teams with lower pending question counts
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Routing Keyword Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Routing is naive.
-  # Current: Keyword matching routes to teams, default is "human".
-  # Requires: ML classifier, context-aware routing, load balancing.
-  #
-  # ESCAPE CLAUSE: Auto-answer always returns False.
-  # Current: can_auto_answer() always returns False.
-  # Requires: Knowledge base integration, confidence thresholds.
-  #
-  # ESCAPE CLAUSE: No confidence scoring for auto-answers.
-  # Current: Not applicable since auto-answer disabled.
-  # Requires: LLM-based answer generation with confidence estimation.
+
+  @wip
+  Scenario: Questions containing "feature" route to product owner
+    When I ask a question "What feature should we prioritize?"
+    Then the question should be routed to "product-owner"
+
+  @wip
+  Scenario: Questions containing "business" route to product owner
+    When I ask a question "What are the business requirements?"
+    Then the question should be routed to "product-owner"
+
+  @wip
+  Scenario: Questions without routing keywords route to human for triage
+    When I ask a question "How do we implement caching?"
+    Then the question should be routed to "human"
+
+  # ===========================================================================
+  # Priority Level Ordering
+  # ===========================================================================
+
+  @wip
+  Scenario: Priority ordering is CRITICAL > BLOCKING > HIGH > MEDIUM > LOW
+    Given a question "Q1" with priority "LOW"
+    And a question "Q2" with priority "MEDIUM"
+    And a question "Q3" with priority "HIGH"
+    And a question "Q4" with priority "BLOCKING"
+    And a question "Q5" with priority "CRITICAL"
+    When I get pending questions
+    Then the questions should be ordered "Q5", "Q4", "Q3", "Q2", "Q1"
+
+  @wip
+  Scenario: Questions default to MEDIUM priority when not specified
+    When I ask a question "What library should we use?"
+    Then the ticket should have priority "MEDIUM"
+
+  # ===========================================================================
+  # Ticket Status Transitions
+  # ===========================================================================
+
+  @wip
+  Scenario: Ticket status transitions from open to answered
+    Given a pending question "What database?" with status "open"
+    When I provide answer "PostgreSQL" from "architect"
+    Then the ticket should have status "answered"
+
+  @wip
+  Scenario: Answered tickets cannot be answered again
+    Given an answered question "What database?" with answer "PostgreSQL"
+    When I try to provide another answer "MySQL" from "developer"
+    Then an error should be raised indicating the question is already answered

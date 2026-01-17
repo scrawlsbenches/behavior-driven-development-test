@@ -5,34 +5,10 @@ Feature: Resource Service
   So that I can track and control resource usage in my projects
 
   # ===========================================================================
-  # TERMINOLOGY
-  # ===========================================================================
-  # This feature tests TWO implementations:
-  #
-  # 1. IN-MEMORY RESOURCE SERVICE (test double)
-  #    - Returns unlimited resources for any project
-  #    - Use when you need isolated tests without resource tracking
-  #
-  # 2. SIMPLE RESOURCE SERVICE (lightweight implementation)
-  #    - Tracks budgets, consumption, and enforces limits
-  #    - Use when testing actual resource management behavior
-  #
-  # RESOURCE AVAILABILITY:
-  #   - "available" means is_available=True in the ResourceStatus response
-  #   - "infinite" means remaining=float('inf') (Python infinity)
-  #
-  # CONSUMPTION REJECTION:
-  #   - When consumption exceeds budget, consume() returns False
-  #   - No exception is raised; caller must check return value
-  #   - Rejected consumptions are not recorded in the consumption history
-
-  # ===========================================================================
   # In-Memory Resource Service (Test Double)
   # ===========================================================================
 
   Scenario: In-memory resource service has unlimited resources
-    # The in-memory test double always returns available=True with infinite remaining.
-    # This allows tests to run without resource constraints.
     Given an in-memory resource service
     When I check available tokens for project "test"
     Then resources should be available
@@ -149,16 +125,42 @@ Feature: Resource Service
     And the organization "acme" remaining budget should be 92000 tokens
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Resource Availability Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Budgets reset on restart.
-  # Current: All budget state is in-memory.
-  # Requires: Database persistence (PostgreSQL/Redis) for budget state.
-  #
-  # ESCAPE CLAUSE: No parent budget checks.
-  # Current: Each scope's budget is independent.
-  # Requires: Hierarchical budgets (org -> team -> project -> task).
-  #
-  # ESCAPE CLAUSE: Hard stop at budget.
-  # Current: Consumption fails immediately when budget exceeded.
-  # Requires: Soft limits with warnings, grace periods, override capability.
+
+  @wip
+  Scenario: Resource availability returns is_available flag
+    Given a simple resource service
+    And a token budget of 1000 for project "test_project"
+    When I check available tokens for project "test_project"
+    Then the response should have is_available set to true
+    And the response should have remaining set to 1000
+
+  @wip
+  Scenario: Resource availability returns false when budget exhausted
+    Given a simple resource service
+    And a token budget of 100 for project "test_project"
+    And consumption of 100 tokens for project "test_project"
+    When I check available tokens for project "test_project"
+    Then the response should have is_available set to false
+    And the response should have remaining set to 0
+
+  # ===========================================================================
+  # Consumption Rejection Behavior
+  # ===========================================================================
+
+  @wip
+  Scenario: Rejected consumption returns false without raising exception
+    Given a simple resource service
+    And a token budget of 100 for project "test_project"
+    When I try to consume 150 tokens for project "test_project"
+    Then the consume method should return false
+    And no exception should be raised
+
+  @wip
+  Scenario: Rejected consumption is not recorded in history
+    Given a simple resource service
+    And a token budget of 100 for project "test_project"
+    When I try to consume 150 tokens for project "test_project"
+    And I get the consumption report for project "test_project"
+    Then the report should show 0 consumption events

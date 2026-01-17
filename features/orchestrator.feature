@@ -5,31 +5,6 @@ Feature: Service Orchestrator
   So that I can manage cross-cutting concerns like governance and resources
 
   # ===========================================================================
-  # TERMINOLOGY
-  # ===========================================================================
-  # ORCHESTRATOR: Central coordinator that routes events through governance,
-  #   resources, knowledge, and communication services. Acts as single entry
-  #   point for service interactions.
-  #
-  # EVENTS: Lifecycle signals that trigger orchestrator actions:
-  #   - CHUNK_STARTED: Work unit begins (triggers governance check, resource check)
-  #   - CHUNK_COMPLETED: Work unit ends (records resource consumption)
-  #   - QUESTION_ASKED: Question submitted (routes to appropriate team)
-  #   - QUESTION_ANSWERED: Answer provided (captures as knowledge)
-  #   - SESSION_STARTED: New session begins (provides resumption context)
-  #   - CONTEXT_COMPACTING: Context window full (creates handoff)
-  #
-  # RESPONSE FIELDS:
-  #   - allow_proceeding: bool - whether the action can continue
-  #   - reason: str - explanation if blocked
-  #   - approval_id: str - ID for pending approval workflow (if needs review)
-  #   - warnings: list - non-blocking concerns (e.g., low budget)
-  #
-  # WARNING THRESHOLDS:
-  #   - Resource warnings trigger when remaining budget < 1000 tokens (hardcoded)
-  #   - Future: Configurable percentage-based thresholds
-
-  # ===========================================================================
   # Orchestrator Setup
   # ===========================================================================
 
@@ -69,8 +44,6 @@ Feature: Service Orchestrator
     And the reason should mention "Requires approval"
 
   Scenario: Resource warnings when budget is below 1000 token threshold
-    # Warning threshold is hardcoded at 1000 tokens. Budgets below this
-    # trigger a warning but don't block the action (allow_proceeding=True).
     Given a simple orchestrator
     And an orchestrator token budget of 500 for project "test"
     When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
@@ -119,9 +92,6 @@ Feature: Service Orchestrator
   # ===========================================================================
 
   Scenario: Preparing for context compaction
-    # Compaction content is a summary string of the current project state
-    # including recorded intents, pending questions, and recent decisions.
-    # This is used to restore context after the LLM context window is cleared.
     Given a simple orchestrator
     And recorded intent "Build API" for project "test"
     When I handle a CONTEXT_COMPACTING event for project "test"
@@ -293,32 +263,102 @@ Feature: Service Orchestrator
     And include the original question context
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Event Type Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Event handling is synchronous.
-  # Current: All events processed sequentially, blocking the caller.
-  # Requires: Async event queue, background workers, event prioritization.
-  #
-  # ESCAPE CLAUSE: Metrics are basic counters.
-  # Current: Simple dict-based counters for event types.
-  # Requires: Prometheus/StatsD integration, histograms, percentiles.
-  #
-  # ESCAPE CLAUSE: Error handling is basic.
-  # Current: Errors logged and re-raised, no recovery strategies.
-  # Requires: Circuit breakers, retry policies, dead letter queues.
-  #
-  # ESCAPE CLAUSE: Limited without real project management integration.
-  # Current: Project context is just IDs, no real PM system connection.
-  # Requires: Jira/Linear/GitHub integration for project state.
-  #
-  # ESCAPE CLAUSE: Converting KnowledgeEntry back to Decision not implemented.
-  # Current: Answers stored as plain knowledge entries, not typed decisions.
-  # Requires: Entry type detection, Decision reconstruction from entry.
-  #
-  # ESCAPE CLAUSE: No confidence scoring for captured knowledge.
-  # Current: All captured knowledge has implicit confidence of 1.0.
-  # Requires: Confidence extraction from answer quality, source reliability.
-  #
-  # ESCAPE CLAUSE: Not capturing consequences in recorded decisions.
-  # Current: Decision consequences field is always empty list.
-  # Requires: Extract consequences from context, track actual outcomes.
+
+  @wip
+  Scenario: CHUNK_STARTED triggers governance and resource checks
+    Given a simple orchestrator
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then a governance check should be performed
+    And a resource check should be performed
+
+  @wip
+  Scenario: CHUNK_COMPLETED records resource consumption
+    Given a simple orchestrator
+    And an orchestrator token budget of 10000 for project "test"
+    When I handle a CHUNK_COMPLETED event for project "test" with 1000 tokens used
+    Then the resource service should record 1000 tokens consumed
+
+  @wip
+  Scenario: QUESTION_ASKED routes to appropriate team
+    Given a simple orchestrator
+    When I handle a QUESTION_ASKED event with question "What security measures?"
+    Then the question should be routed to "security-team"
+
+  @wip
+  Scenario: QUESTION_ANSWERED captures answer as knowledge
+    Given a simple orchestrator
+    When I handle a QUESTION_ANSWERED event with question "Auth approach?" and answer "JWT"
+    Then a knowledge entry should exist containing "JWT"
+
+  @wip
+  Scenario: SESSION_STARTED provides resumption context
+    Given a simple orchestrator
+    And recorded intent "Build API" for project "test"
+    When I handle a SESSION_STARTED event for project "test"
+    Then the response should contain "Build API" in resumption context
+
+  @wip
+  Scenario: CONTEXT_COMPACTING creates handoff package
+    Given a simple orchestrator
+    When I handle a CONTEXT_COMPACTING event for project "test"
+    Then a handoff should be created for project "test"
+
+  # ===========================================================================
+  # Response Field Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: Response includes allow_proceeding boolean
+    Given a simple orchestrator
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should have allow_proceeding field as boolean
+
+  @wip
+  Scenario: Response includes reason when blocked
+    Given a simple orchestrator
+    And a governance policy that denies "CHUNK_STARTED"
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should have reason field explaining why blocked
+
+  @wip
+  Scenario: Response includes approval_id when review required
+    Given a simple orchestrator
+    And a governance policy requiring review for "CHUNK_STARTED"
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should have approval_id field
+
+  @wip
+  Scenario: Response includes warnings list for non-blocking concerns
+    Given a simple orchestrator
+    And an orchestrator token budget of 500 for project "test"
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should have warnings as a list
+    And warnings should contain resource warning
+
+  # ===========================================================================
+  # Warning Threshold Specifications
+  # ===========================================================================
+
+  @wip
+  Scenario: Resource warning triggers at 1000 token threshold
+    Given a simple orchestrator
+    And an orchestrator token budget of 999 for project "test"
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should include a resource warning
+
+  @wip
+  Scenario: No resource warning when budget above 1000 tokens
+    Given a simple orchestrator
+    And an orchestrator token budget of 1001 for project "test"
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should not include a resource warning
+
+  @wip
+  Scenario: Resource warning does not block the action
+    Given a simple orchestrator
+    And an orchestrator token budget of 500 for project "test"
+    When I handle a CHUNK_STARTED event for project "test" chunk "chunk1"
+    Then the response should include a resource warning
+    And the response should allow proceeding

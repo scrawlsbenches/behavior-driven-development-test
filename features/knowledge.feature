@@ -5,29 +5,10 @@ Feature: Knowledge Service
   So that I can build applications that learn from past decisions
 
   # ===========================================================================
-  # TERMINOLOGY
-  # ===========================================================================
-  # This feature tests TWO implementations:
-  #
-  # 1. IN-MEMORY KNOWLEDGE SERVICE (test double)
-  #    - Stores entries (store() succeeds) but retrieval always returns empty list
-  #    - PURPOSE: Allows testing components that WRITE to knowledge without
-  #      triggering retrieval side effects. Useful for verifying that your code
-  #      correctly calls store() without needing actual knowledge lookup.
-  #    - Use when you need isolated tests without knowledge lookup influencing results
-  #
-  # 2. SIMPLE KNOWLEDGE SERVICE (lightweight implementation)
-  #    - Stores and retrieves entries using keyword matching
-  #    - Use when testing actual knowledge storage and retrieval behavior
-
-  # ===========================================================================
   # In-Memory Knowledge Service (Test Double)
   # ===========================================================================
 
   Scenario: In-memory knowledge service accepts stores but returns empty on retrieval
-    # This test double is useful for testing code that stores knowledge
-    # without needing actual retrieval functionality. The store() call
-    # succeeds (doesn't throw), but retrieve() always returns an empty list.
     Given an in-memory knowledge service
     When I store a knowledge entry "Test knowledge"
     And I retrieve knowledge for "Test"
@@ -124,16 +105,28 @@ Feature: Knowledge Service
     And the embedding should be a vector of appropriate dimensions
 
   # ===========================================================================
-  # Known Limitations (Escape Clauses)
+  # Simple Knowledge Service Behavior Specifications
   # ===========================================================================
-  # ESCAPE CLAUSE: Uses simple keyword matching, not semantic search.
-  # Current: O(n) scan checking if query words appear in content.
-  # Requires: Embedding model (OpenAI/local), vector DB (Pinecone/pgvector).
-  #
-  # ESCAPE CLAUSE: Relevance scoring is placeholder.
-  # Current: Returns 1.0 for matches, no real relevance ranking.
-  # Requires: TF-IDF or embedding similarity scores.
-  #
-  # ESCAPE CLAUSE: Embeddings not implemented.
-  # Current: KnowledgeEntry.embedding is always None.
-  # Requires: Embedding generation on store, storage in vector DB.
+
+  @wip
+  Scenario: Simple knowledge service uses keyword matching for retrieval
+    Given a simple knowledge service
+    And a knowledge entry "We use PostgreSQL for our database"
+    When I search for "PostgreSQL"
+    Then the entry should be found
+    When I search for "MySQL"
+    Then no knowledge entries should be found
+
+  @wip
+  Scenario: Simple knowledge service returns 1.0 relevance for all matches
+    Given a simple knowledge service
+    And a knowledge entry "PostgreSQL is our primary database"
+    And a knowledge entry "We also use PostgreSQL for analytics"
+    When I search for "PostgreSQL"
+    Then both entries should have relevance score of 1.0
+
+  @wip
+  Scenario: Knowledge entry embedding is null in simple implementation
+    Given a simple knowledge service
+    When I store knowledge "Test entry"
+    Then the entry should have a null embedding
