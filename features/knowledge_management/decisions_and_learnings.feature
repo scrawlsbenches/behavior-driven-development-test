@@ -188,7 +188,7 @@ Feature: Organizational Decisions and Learnings
     When Taylor searches for "how do we handle user sessions?"
     Then the system should understand the semantic meaning
     And return decisions about session management
-    Even if they don't contain the exact phrase "user sessions"
+    # Even if they don't contain the exact phrase "user sessions"
 
   # ===========================================================================
   # Decision Analytics - MVP-P2
