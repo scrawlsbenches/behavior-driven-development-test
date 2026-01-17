@@ -1,0 +1,18 @@
+#!/bin/bash
+# Pre-commit hook - runs architecture checks before allowing commit
+# This hook is stored in the repo and activated via: git config core.hooksPath scripts/hooks
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Architecture check
+echo "Checking architecture..."
+if ! python scripts/check_architecture.py; then
+    echo ""
+    echo "COMMIT BLOCKED: Architecture violations found."
+    echo "Fix the issues above before committing."
+    exit 1
+fi
+
+echo "All pre-commit checks passed."

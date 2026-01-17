@@ -2,6 +2,16 @@
 
 This directory contains **developer tooling** - scripts that enforce codebase quality but aren't user-facing behavior.
 
+## Quick Start
+
+After cloning the repository, run:
+
+```bash
+./scripts/setup-dev.sh
+```
+
+This configures git hooks and installs dependencies. The architecture check will run automatically on every commit.
+
 ## Why These Aren't BDD Features
 
 BDD features (in `features/`) specify **user behavior**:
@@ -17,6 +27,19 @@ These scripts enforce **developer constraints**:
 **Rule of thumb:** If you can't identify a persona from `features/PERSONAS.md` who benefits, it's developer tooling, not a BDD feature.
 
 ## Available Scripts
+
+### setup-dev.sh
+
+One-time setup after cloning:
+
+```bash
+./scripts/setup-dev.sh
+```
+
+This:
+- Configures git to use `scripts/hooks/` for git hooks
+- Installs the package in development mode
+- No manual hook installation needed
 
 ### check_architecture.py
 
@@ -37,11 +60,15 @@ python scripts/check_architecture.py
 - `0` - All checks passed
 - `1` - Violations found (blocks merge)
 
-**Add to CI:**
-```yaml
-- name: Check Architecture
-  run: python scripts/check_architecture.py
-```
+## Hooks
+
+The `hooks/` subdirectory contains git hooks that run automatically:
+
+| Hook | Trigger | What It Does |
+|------|---------|--------------|
+| `pre-commit` | Before each commit | Runs architecture check |
+
+Hooks are activated by `setup-dev.sh` via `git config core.hooksPath scripts/hooks`.
 
 ## Adding New Scripts
 
@@ -51,4 +78,4 @@ When adding developer tooling:
 2. **If user behavior:** Write a behave feature with a persona
 3. **If code organization:** Add a script here
 
-Keep scripts focused and fast - they run on every PR.
+Keep scripts focused and fast - they run on every commit/PR.
