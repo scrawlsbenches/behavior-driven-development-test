@@ -21,6 +21,13 @@ def step_persona_starts_exploring(context, persona, problem):
     context.current_persona = persona
     context.current_problem = problem
 
+    # Check if we're in LLM-only mode (no graph needed)
+    if getattr(context, 'llm_only_mode', False):
+        context.exploration_path = [problem]
+        context.thoughts_by_content = {problem: {"content": problem, "depth": 0}}
+        context.root_thought = problem
+        return
+
     # Use the underlying graph to add the root thought
     thought = context.graph.add_thought(problem)
     context.root_thought_id = thought.id
