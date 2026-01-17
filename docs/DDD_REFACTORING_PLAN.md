@@ -101,30 +101,36 @@ graph_of_thought/
 - [x] `governance_steps.py` - kept local enums (different values)
 
 ### Step 8: Update architecture tests
-- [ ] Add tests for domain model locations
-- [ ] Update `check_architecture.py` script
+- [x] Add tests for domain model locations (test_domain_models.py, test_domain_enums.py)
+- [x] Update `check_architecture.py` script
 - [x] Verify all tests pass
+
+### Step 9: Remove premature backwards compatibility
+- [x] Remove re-exports from `core/types.py` (keep only TypeVar T)
+- [x] Remove re-exports from `services/protocols.py` __all__
+- [x] Update step files to import from `graph_of_thought.domain`
+- [x] Simplify `test_backwards_compatibility.py`
 
 ## Import Hierarchy
 
-After refactoring, the import hierarchy should be:
+After refactoring, the import hierarchy is:
 
 ```
 domain/           ← No dependencies on other modules (leaf)
     ↑
-core/             ← Imports domain models
+core/             ← TypeVar only, no domain imports
     ↑
-services/         ← Imports domain + core
+services/         ← Imports domain for type hints in protocols
     ↑
 features/steps/   ← Imports domain + services (for tests)
 ```
 
-## Backwards Compatibility
+## Single Source of Truth
 
-To maintain backwards compatibility during migration:
-1. Keep re-exports in original locations initially
-2. Add deprecation warnings for old import paths
-3. Remove old paths in a future release
+All domain models and enums are imported from `graph_of_thought.domain`.
+
+**Removed:** Re-exports from `core/types.py` and `services/protocols.py` were removed
+because the codebase had no external users requiring backwards compatibility.
 
 ## Test Baseline (Pre-Refactor)
 
