@@ -122,7 +122,7 @@ features/
 ├── steps/                              # Step definitions
 │   └── *.py
 │
-└── [legacy features]                   # Original technical features (deprecated)
+└── *.feature                           # Foundation API tests (library-level)
 
 behave.ini                              # Behave configuration
 ```
