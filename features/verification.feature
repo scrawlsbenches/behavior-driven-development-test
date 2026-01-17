@@ -161,11 +161,25 @@ Feature: In-Memory Verification Provider
     Then the second verification should use cached result
     And only 1 actual verification should occur
 
+  @wip
+  Scenario: LLM-based thought verification
+    Given an LLM-powered verifier
+    When I verify content "The earth is flat"
+    Then the LLM should evaluate factual accuracy
+    And provide reasoning for the verdict
+    And the confidence should reflect uncertainty
+
+  @wip
+  Scenario: External fact-checking integration
+    Given a verifier with external fact-checking API
+    When I verify content "Climate change is caused by human activity"
+    Then the verifier should query external fact-checking services
+    And aggregate results from multiple sources
+    And cache results to reduce API calls
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================
-  # These document current limitations and what would be needed to address them.
-  #
   # ESCAPE CLAUSE: No LLM-based verification.
   # Current: InMemoryVerifier uses configurable rules for testing.
   # Requires: LLM integration, prompt templates, response parsing.

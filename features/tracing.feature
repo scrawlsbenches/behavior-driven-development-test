@@ -198,11 +198,34 @@ Feature: In-Memory Tracing Provider
     And I end the span "exportable"
     Then I should be able to export spans in OTLP format
 
+  @wip
+  Scenario: Distributed trace context propagation
+    Given an in-memory tracing provider
+    When I start a span "api_call"
+    And I extract W3C trace context headers
+    Then the headers should contain "traceparent"
+    And the headers should contain "tracestate"
+    When I inject those headers into a downstream service
+    Then the downstream span should have the same trace ID
+
+  @wip
+  Scenario: Head-based span sampling
+    Given an in-memory tracing provider with 10% sampling rate
+    When I start 100 spans
+    Then approximately 10 spans should be captured
+    And the sampling decision should be consistent within a trace
+
+  @wip
+  Scenario: Tail-based span sampling
+    Given an in-memory tracing provider with tail-based sampling
+    When I complete a trace with an error
+    Then all spans in that trace should be captured
+    When I complete a trace without errors
+    Then only sampled spans should be captured
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================
-  # These document current limitations and what would be needed to address them.
-  #
   # ESCAPE CLAUSE: No OpenTelemetry integration.
   # Current: InMemoryTracingProvider stores spans locally for testing.
   # Requires: OpenTelemetry SDK, span exporters, trace context propagation.

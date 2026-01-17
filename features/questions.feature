@@ -73,6 +73,24 @@ Feature: Question Service
     When I check SLA compliance
     Then the question should be flagged as SLA violation
 
+  @wip
+  Scenario: Question service uses ML-based routing
+    Given a simple question service with ML classifier
+    And historical routing data showing "database" questions go to "dba-team"
+    When I ask a question "Should we add an index to the users table?"
+    Then the classifier should analyze the question context
+    And route to "dba-team" based on learned patterns
+    And the confidence should be above 0.7
+
+  @wip
+  Scenario: Question service balances load across teams
+    Given a simple question service with load balancing
+    And team "backend-team" with 5 pending questions
+    And team "frontend-team" with 2 pending questions
+    When I ask a general development question "How should we structure this feature?"
+    Then the question should be routed considering team workload
+    And prefer teams with lower pending question counts
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================

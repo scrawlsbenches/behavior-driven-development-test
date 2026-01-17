@@ -96,6 +96,37 @@ Feature: Resource Service
     When I request a timeline projection for project "test_project"
     Then the projection should estimate exhaustion in 10 days
 
+  @wip
+  Scenario: Resource service persists budgets across restarts
+    Given a simple resource service with database persistence
+    And a token budget of 10000 for project "test_project"
+    And consumption of 500 tokens for project "test_project"
+    When the service restarts
+    Then the token budget for project "test_project" should be 10000
+    And the remaining tokens for project "test_project" should be 9500
+
+  @wip
+  Scenario: Resource service enforces hierarchical budget limits
+    Given a simple resource service
+    And organization "acme" with budget of 100000 tokens
+    And team "engineering" under "acme" with budget of 50000 tokens
+    And project "test_project" under "engineering" with budget of 10000 tokens
+    When I try to consume 60000 tokens for project "test_project"
+    Then the consumption should be rejected
+    And the rejection should mention team budget exceeded
+
+  @wip
+  Scenario: Parent budget consumption rolls up from children
+    Given a simple resource service
+    And organization "acme" with budget of 100000 tokens
+    And team "engineering" under "acme" with budget of 50000 tokens
+    And project "project_a" under "engineering" with budget of 10000 tokens
+    And project "project_b" under "engineering" with budget of 10000 tokens
+    When I consume 5000 tokens for project "project_a"
+    And I consume 3000 tokens for project "project_b"
+    Then the team "engineering" remaining budget should be 42000 tokens
+    And the organization "acme" remaining budget should be 92000 tokens
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================

@@ -58,6 +58,34 @@ Feature: Communication Service
     Then the analysis should identify "slow response" as a pattern
     And suggest improvements for response time
 
+  @wip
+  Scenario: Communication service persists state to database
+    Given a simple communication service with database persistence
+    And recorded intent "Build API" for project "test_project"
+    And feedback "Great work" for project "test_project"
+    When the service restarts
+    Then the intent "Build API" should be retrievable
+    And the feedback "Great work" should be retrievable
+
+  @wip
+  Scenario: Communication service includes thread history in handoff
+    Given a simple communication service
+    And a conversation thread with 5 messages for project "test_project"
+    When I create a handoff for project "test_project" of type "ai_to_human"
+    Then the handoff should include the conversation thread
+    And messages should be in chronological order
+
+  @wip
+  Scenario: Communication service includes action items in handoff
+    Given a simple communication service
+    And pending action items for project "test_project":
+      | item                    | assignee |
+      | Review PR #123          | alice    |
+      | Update documentation    | bob      |
+    When I create a handoff for project "test_project" of type "ai_to_human"
+    Then the handoff should include 2 action items
+    And each action item should have assignee information
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================

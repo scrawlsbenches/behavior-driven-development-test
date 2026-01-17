@@ -81,6 +81,32 @@ Feature: Knowledge Service
       | supersedes  | ADR-001                  |
     Then the ADR should be stored with all fields
 
+  @wip
+  Scenario: Knowledge service uses semantic search
+    Given a simple knowledge service with embeddings enabled
+    And a knowledge entry "We authenticate users with JWT tokens"
+    And a knowledge entry "The weather today is sunny"
+    When I search for "user login verification"
+    Then the JWT entry should be found
+    And the weather entry should not be found
+    And the search should use semantic similarity not keywords
+
+  @wip
+  Scenario: Knowledge service returns relevance scores
+    Given a simple knowledge service with embeddings enabled
+    And a knowledge entry "PostgreSQL is our primary database"
+    And a knowledge entry "We also use Redis for caching"
+    When I search for "database storage"
+    Then results should have relevance scores between 0 and 1
+    And the PostgreSQL entry should have higher relevance than Redis entry
+
+  @wip
+  Scenario: Knowledge service generates embeddings on store
+    Given a simple knowledge service with embeddings enabled
+    When I store knowledge "New important decision about architecture"
+    Then the entry should have a non-null embedding
+    And the embedding should be a vector of appropriate dimensions
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================

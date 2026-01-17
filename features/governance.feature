@@ -64,6 +64,31 @@ Feature: Governance Service
     And 45 minutes pass without approval
     Then the request should be escalated to "senior-admin"
 
+  @wip
+  Scenario: Callable policy receives full context
+    Given a simple governance service
+    And a callable policy for action "deploy" that checks actor role
+    When actor "developer" checks approval for action "deploy" on resource "production"
+    Then the callable should receive action context including resource "production"
+    And the callable should receive actor info including role "developer"
+    And the callable should receive environment variables
+
+  @wip
+  Scenario: Policy definitions are validated on registration
+    Given a simple governance service
+    When I register a policy with invalid structure
+    Then a validation error should be raised
+    And the error should specify which fields are invalid
+
+  @wip
+  Scenario: Policies can be exported in structured format
+    Given a simple governance service
+    And a policy "deploy_production" requires review
+    And a policy "minor_change" allows all
+    When I export all policies
+    Then each policy should have name, type, conditions, and actions
+    And the export should be valid PolicyDefinition format
+
   # ===========================================================================
   # Known Limitations (Escape Clauses)
   # ===========================================================================
