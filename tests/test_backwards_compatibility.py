@@ -152,6 +152,22 @@ class TestBackwardsCompatibilityImports:
 
         assert HandoffPackage is not None
 
+    def test_services_protocols_exports_resource_type(self):
+        """
+        services/protocols.py should export ResourceType enum.
+
+        Old code: from graph_of_thought.services.protocols import ResourceType
+
+        NOTE: Edge case test added during review - this was missing from
+        backwards compat tests while identity test existed in TestEnumIdentity.
+        """
+        from graph_of_thought.services.protocols import ResourceType
+
+        assert ResourceType is not None
+        assert hasattr(ResourceType, 'TOKENS')
+        assert hasattr(ResourceType, 'HUMAN_ATTENTION')
+        assert hasattr(ResourceType, 'COMPUTE_TIME')
+
 
 # =============================================================================
 # Test 2: Enum Identity - Same Enum Class Across Modules

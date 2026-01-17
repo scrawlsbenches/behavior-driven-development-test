@@ -389,6 +389,22 @@ class TestThought:
         assert thought1 == thought2
         assert thought1 != thought3
 
+    def test_thought_equality_with_non_thought_object(self):
+        """Thought.__eq__ returns False for non-Thought objects.
+
+        NOTE: Edge case test - verifies the isinstance check in __eq__ works correctly.
+        """
+        from graph_of_thought.domain import Thought
+
+        thought = Thought(content="Test", id="abc123")
+
+        # Should return False, not raise an exception
+        assert thought != "abc123"  # String with same value as ID
+        assert thought != 123
+        assert thought != None
+        assert thought != {"id": "abc123"}
+        assert thought != ["abc123"]
+
     def test_thought_hash_by_id(self):
         """Thought hash is based on ID."""
         from graph_of_thought.domain import Thought
@@ -499,6 +515,26 @@ class TestEdge:
         assert edge.target_id == "thought-2"
         assert edge.relation == "refines"
         assert edge.weight == 0.8
+
+    def test_edge_from_dict_minimal_data(self):
+        """Edge.from_dict works with only required fields (source_id, target_id).
+
+        NOTE: Edge case test - verifies .get() defaults work for optional fields.
+        """
+        from graph_of_thought.domain import Edge
+
+        minimal_data = {
+            "source_id": "thought-1",
+            "target_id": "thought-2",
+        }
+
+        edge = Edge.from_dict(minimal_data)
+        assert edge.source_id == "thought-1"
+        assert edge.target_id == "thought-2"
+        # Verify defaults are applied for missing optional fields
+        assert edge.relation == "leads_to"  # default value
+        assert edge.weight == 1.0  # default value
+        assert edge.metadata == {}  # default value
 
 
 class TestSearchResult:
