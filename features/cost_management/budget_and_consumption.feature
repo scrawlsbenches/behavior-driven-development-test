@@ -1,4 +1,4 @@
-@cost-management @mvp-p0
+@wip @cost-management @mvp-p0
 Feature: Token Budget and Consumption Management
   As a Finance Administrator
   I want to allocate and track AI token budgets across teams and projects

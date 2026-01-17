@@ -1,4 +1,4 @@
-@knowledge-management @mvp-p0
+@wip @knowledge-management @mvp-p0
 Feature: Organizational Decisions and Learnings
   As an Engineering Manager
   I want all significant decisions to be documented with their rationale

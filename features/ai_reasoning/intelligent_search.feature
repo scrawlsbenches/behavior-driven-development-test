@@ -1,4 +1,4 @@
-@ai-reasoning @search @mvp-p0
+@wip @ai-reasoning @search @mvp-p0
 Feature: Intelligent Solution Search
   As a Data Scientist with limited time and token budget
   I want the system to automatically explore promising thought directions

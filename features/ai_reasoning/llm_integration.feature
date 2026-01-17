@@ -1,4 +1,4 @@
-@ai-reasoning @llm @mvp-p0
+@wip @ai-reasoning @llm @mvp-p0
 Feature: LLM Integration for Thought Generation and Evaluation
   As a Data Scientist
   I want AI-powered generation of follow-up thoughts

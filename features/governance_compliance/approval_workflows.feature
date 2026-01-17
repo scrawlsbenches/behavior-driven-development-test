@@ -1,4 +1,4 @@
-@governance @compliance @mvp-p0
+@wip @governance @compliance @mvp-p0
 Feature: Approval Workflows and Policy Enforcement
   As a Security Officer
   I want all sensitive AI operations to require documented approval

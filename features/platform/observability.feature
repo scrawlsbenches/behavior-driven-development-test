@@ -1,4 +1,4 @@
-@platform @observability @mvp-p1
+@wip @platform @observability @mvp-p1
 Feature: System Observability and Monitoring
   As a DevOps Engineer
   I want comprehensive logging, metrics, and tracing for AI operations

@@ -1,4 +1,4 @@
-@platform @persistence @mvp-p0
+@wip @platform @persistence @mvp-p0
 Feature: Data Persistence and Recovery
   As a Data Scientist
   I want my exploration work to be automatically saved

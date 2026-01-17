@@ -131,12 +131,36 @@ Feature: Business Capability Name
 - Edge case handling
 - Performance optimizations
 
-## Legacy Features
+## Feature Transition
 
-The original 25 technical feature files remain in the `features/` root directory:
+We are transitioning from legacy features to enterprise-focused features.
+
+### Current State
+
+| Feature Set | Location | Status | Run by Default |
+|-------------|----------|--------|----------------|
+| **Legacy** | `features/*.feature` | Has step definitions | Yes |
+| **Enterprise** | `features/*/` subdirs | @wip - needs step defs | No (skipped) |
+
+### Legacy Features (25 files)
+
+The original technical feature files in `features/` root:
 - `basic_operations.feature`, `governance.feature`, `search.feature`, etc.
+- Have working step definitions
+- Use generic "developer" persona (not ideal BDD practice)
 
-**Status**: These legacy files use the generic "developer" persona and technical focus. The new enterprise-focused features in subdirectories provide business-aligned alternatives. Legacy files are maintained for backward compatibility with existing step definitions but are considered deprecated in favor of the new structure.
+### Enterprise Features (10 files, @wip)
+
+The new business-focused features in subdirectories:
+- Use specific personas from `PERSONAS.md`
+- Follow proper BDD practices
+- Need step definitions written before they can run
+
+### Transition Plan
+
+1. Enterprise features are marked `@wip` and skipped by default
+2. As step definitions are written, remove `@wip` from individual features
+3. Legacy features will be removed once enterprise features have full coverage
 
 ## Contributing
 
