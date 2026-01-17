@@ -598,7 +598,14 @@ def step_routed_to_two_approvers(context, approver1, approver2):
 
 @then('it should be routed to "{approver}"')
 def step_routed_to_single_approver(context, approver):
-    """Verify request is routed to a single approver."""
+    """Verify request is routed to a single approver (handles both governance and questions)."""
+    # Knowledge management question routing
+    if hasattr(context, 'current_question'):
+        assert context.current_question.routed_to == approver, \
+            f"Question not routed to '{approver}', got '{context.current_question.routed_to}'"
+        return
+
+    # Governance approval routing
     assert approver in context.current_request.approvers_required, \
         f"Request not routed to {approver}"
 
@@ -723,6 +730,21 @@ def step_reviewer_sees(context, persona):
             resumption = context.resumption_context
             assert "Welcome back" in resumption.get("message", ""), "Welcome message not found"
             assert resumption.get("last_intent") is not None, "Last intent not available"
+        return
+
+    # Handle knowledge management question answer display
+    if hasattr(context, 'current_question') and hasattr(context.current_question, 'answer'):
+        q = context.current_question
+        for row in context.table:
+            section = row['section']
+            if section == 'answer':
+                assert q.answer, "Answer should be present"
+            elif section == 'answered_by':
+                assert q.answered_by, "Answered by should be present"
+            elif section == 'answered_at':
+                assert q.answered_at is not None, "Answered at should be present"
+            elif section == 'next_steps':
+                pass  # Optional field
         return
 
     # Handle table case (used by governance for review details)

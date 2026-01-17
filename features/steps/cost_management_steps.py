@@ -467,7 +467,7 @@ def step_show_percentage(context):
 
 @given("{persona} is working on project \"{project}\"")
 def step_persona_working_on_project(context, persona, project):
-    """Set up persona working on a project."""
+    """Set up persona working on a project (handles both cost and knowledge contexts)."""
     context.current_persona = persona
     context.current_project = project
     service = get_cost_service(context)
@@ -484,6 +484,18 @@ def step_persona_working_on_project(context, persona, project):
             level=BudgetLevel.PROJECT,
             allocated=100000
         )
+
+    # Also set up knowledge service work chunk if knowledge service exists
+    if hasattr(context, 'knowledge_service'):
+        from features.steps.knowledge_management_steps import WorkChunk, ChunkStatus
+        chunk_id = f"CHUNK-{project.replace(' ', '-')}"
+        context.knowledge_service.work_chunks[chunk_id] = WorkChunk(
+            id=chunk_id,
+            name=f"Work on {project}",
+            project=project,
+            status=ChunkStatus.ACTIVE,
+        )
+        context.current_chunk = context.knowledge_service.work_chunks[chunk_id]
 
 
 @given("the project has {amount:d} tokens remaining")

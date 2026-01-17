@@ -331,8 +331,20 @@ def step_deep_thought_chain(context):
 
 @when("{persona} asks \"{question}\"")
 def step_persona_asks(context, persona, question):
-    """Simulate a persona asking a question about the exploration."""
+    """Simulate a persona asking a question (handles both exploration and knowledge routing)."""
     context.current_persona = persona
+
+    # Knowledge management question routing (if service is set up)
+    if hasattr(context, 'knowledge_service'):
+        service = context.knowledge_service
+        context.current_question = service.ask_question(
+            question=question,
+            asked_by=persona,
+            project=getattr(context, 'current_project', ''),
+        )
+        return
+
+    # Exploration context - asking about reasoning path
     context.current_question = question
 
     # If asking about reaching a conclusion, get the path

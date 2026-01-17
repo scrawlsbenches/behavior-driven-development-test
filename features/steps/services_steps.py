@@ -346,11 +346,43 @@ def step_check_ticket_priority(context, priority):
 
 @then('the question should be routed to "{target}"')
 def step_check_routing(context, target):
+    """Check question routing (handles both Foundation and Application contexts)."""
+    # Application context (knowledge_management)
+    if hasattr(context, 'current_question'):
+        assert context.current_question.routed_to == target, \
+            f"Expected route to '{target}', got '{context.current_question.routed_to}'"
+        return
+    # Foundation context
     assert context.ticket.routed_to == target
 
 
 @given('a pending question "{question}"')
 def step_pending_question(context, question):
+    """Create a pending question (handles both Foundation and Application contexts)."""
+    # Application context (knowledge_management)
+    if hasattr(context, 'knowledge_service'):
+        from features.steps.knowledge_management_steps import WorkChunk, ChunkStatus, get_knowledge_service
+        service = get_knowledge_service(context)
+
+        # Create a work chunk for the project
+        chunk_id = "CHUNK-churn"
+        service.work_chunks[chunk_id] = WorkChunk(
+            id=chunk_id,
+            name="Churn Analysis",
+            project="Customer churn analysis",
+            status=ChunkStatus.BLOCKED,
+        )
+        context.current_chunk = service.work_chunks[chunk_id]
+
+        context.current_question = service.ask_question(
+            question=question,
+            blocking=True,
+            asked_by="Jordan",
+            project="Customer churn analysis",
+        )
+        return
+
+    # Foundation context
     context.ticket = context.question_service.ask(question)
 
 

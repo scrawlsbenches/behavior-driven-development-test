@@ -368,40 +368,7 @@ def step_project_status_shows(context, status):
 # Project Dashboard Steps - MVP-P0
 # =============================================================================
 
-@given('project "{project_name}" with')
-@given('project "{project_name}" with:')
-def step_project_with_metrics(context, project_name):
-    """Set up project with specific metrics."""
-    service = get_project_service(context)
-
-    project = service.create_project(
-        name=project_name,
-        objective="Test objective",
-        team="Test Team",
-        token_budget=100000
-    )
-
-    # Apply metrics from table
-    for row in context.table:
-        metric = row['metric']
-        value = int(row['value'])
-
-        if metric == 'work_chunks':
-            # Create dummy chunks
-            for i in range(value):
-                chunk = service.create_work_chunk(project, f"Chunk {i+1}", "Jordan")
-                chunk.status = ChunkStatus.COMPLETED
-        elif metric == 'tokens_used':
-            project.tokens_used = value
-        elif metric == 'tokens_remaining':
-            project.token_budget = project.tokens_used + value
-        elif metric == 'decisions_made':
-            project.decisions_made = value
-        elif metric == 'questions_pending':
-            project.questions_pending = value
-
-    context.current_project = project
-
+# Note: 'project "{project_name}" with:' is handled by persistence_steps.py with table format check
 
 @when("{persona} views the project dashboard")
 def step_view_project_dashboard(context, persona):
