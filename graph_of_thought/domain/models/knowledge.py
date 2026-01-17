@@ -15,51 +15,56 @@ class Decision:
     """
     A recorded decision with full context.
 
-    Based on Architecture Decision Records (ADR) pattern.
+    ESCAPE CLAUSE: Real ADRs (Architecture Decision Records) have more structure.
+    This is a simplified version that captures the essentials. Extend as needed.
     """
     id: str
     title: str
-    context: str = ""
-    decision: str = ""
-    rationale: str = ""
-    alternatives: str = ""
-    consequences: str = ""
-    made_by: str = ""
-    project: str = ""
-    date: datetime = field(default_factory=datetime.now)
-    tags: List[str] = field(default_factory=list)
-    status: str = "accepted"  # proposed, accepted, deprecated, superseded
-    supersedes: Optional[str] = None  # ID of decision this supersedes
-    superseded_by: Optional[str] = None  # ID of decision that supersedes this
+    context: str              # Why we faced this decision
+    options: list[str]        # What we considered
+    chosen: str               # What we picked
+    rationale: str            # Why we picked it
+    consequences: list[str]   # Expected impacts
+    created_at: datetime = field(default_factory=datetime.now)
+    created_by: str = ""      # Human or AI
+    project_id: str = ""
+    chunk_id: str = ""
+    supersedes: str | None = None  # ID of decision this replaces
 
-    def __post_init__(self):
-        # Build searchable text from all fields
-        self.searchable_text = " ".join([
-            self.title, self.context, self.decision,
-            self.rationale, self.alternatives, self.consequences
-        ]).lower()
+    # ESCAPE CLAUSE: Outcome tracking not implemented
+    # These fields exist but nothing populates them yet
+    outcome: str = ""         # What actually happened
+    outcome_recorded_at: datetime | None = None
 
 
 @dataclass
 class KnowledgeEntry:
     """
-    A piece of knowledge that can be queried.
+    A piece of retrievable knowledge.
 
-    Can be a decision, learning, FAQ, or any documented knowledge.
+    ESCAPE CLAUSE: Real semantic search requires embeddings and a vector DB.
+    This version uses simple keyword matching. The interface is correct but
+    the implementation is naive.
     """
     id: str
     content: str
-    entry_type: str = "general"  # decision, learning, faq, documentation
-    source: str = ""
-    tags: List[str] = field(default_factory=list)
+    entry_type: str  # "decision", "pattern", "discovery", "failure", "context"
+    source_project: str = ""
+    source_chunk: str = ""
+    tags: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    metadata: dict[str, Any] = field(default_factory=dict)
+
+    # ESCAPE CLAUSE: Embeddings not implemented
+    # When you add a vector DB, populate this field
+    embedding: list[float] | None = None
+
+    # ESCAPE CLAUSE: Relevance scoring is placeholder
+    relevance_score: float = 0.0
 
 
 @dataclass
 class Question:
-    """A question asked during work."""
+    """A question asked during work (used by BDD step definitions)."""
     id: str
     question: str
     context: str = ""
@@ -80,23 +85,36 @@ class Question:
 @dataclass
 class QuestionTicket:
     """
-    A tracked question that needs answering.
+    A question that needs answering (used by QuestionService).
 
-    Used by the QuestionService for routing and tracking.
+    Tracks the full lifecycle from asked to answered to validated.
     """
     id: str
     question: str
-    asker: str = ""
     context: str = ""
+    asker: str = ""           # "ai" or user identifier
     priority: Priority = Priority.MEDIUM
-    assigned_to: Optional[str] = None
-    answer: Optional[str] = None
-    answered_by: Optional[str] = None
-    answered_at: Optional[datetime] = None
-    blocking_work: bool = False
-    work_chunk_id: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.now)
+
+    # Routing
+    routed_to: str = ""       # Who should answer
+    routing_reason: str = ""  # Why routed there
+
+    # Status
+    status: str = "open"      # open, answered, validated, closed
+    asked_at: datetime = field(default_factory=datetime.now)
+    answered_at: datetime | None = None
+
+    # Answer
+    answer: str = ""
+    answered_by: str = ""
+
+    # Validation
+    validated: bool = False
+    validation_notes: str = ""
+
+    # Knowledge capture
+    captured_as_knowledge: bool = False
+    knowledge_entry_id: str = ""
 
 
 @dataclass

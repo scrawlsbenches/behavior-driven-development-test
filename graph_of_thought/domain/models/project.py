@@ -61,18 +61,38 @@ class SessionHandoff:
 @dataclass
 class HandoffPackage:
     """
-    Complete context for resuming work.
+    Everything needed for a context handoff (AI→Human, Human→AI, AI→AI).
 
-    Used when transitioning between sessions or team members.
+    ESCAPE CLAUSE: This is the minimum viable handoff. Real handoffs might need:
+    - Diff summaries for code changes
+    - Test result attachments
+    - Screenshots for UI work
+    - Dependency graphs for architecture
+    Extend this class as those needs emerge.
     """
     id: str
-    project_id: str
-    summary: str
-    key_decisions: List[str] = field(default_factory=list)
-    open_questions: List[str] = field(default_factory=list)
-    next_steps: List[str] = field(default_factory=list)
-    blockers: List[str] = field(default_factory=list)
-    context: dict[str, Any] = field(default_factory=dict)
-    created_by: str = ""
+    handoff_type: str  # "ai_to_human", "human_to_ai", "ai_to_ai", "human_to_human"
     created_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
+
+    # Context
+    project_id: str = ""
+    chunk_id: str = ""
+    intent: str = ""          # What we're trying to achieve
+    constraints: list[str] = field(default_factory=list)
+
+    # State
+    current_state: str = ""   # Where we are now
+    blockers: list[str] = field(default_factory=list)
+    next_actions: list[str] = field(default_factory=list)
+
+    # For code review handoffs
+    changes_summary: str = ""
+    risks: list[str] = field(default_factory=list)
+    test_status: str = ""
+
+    # Questions that need answering
+    open_questions: list[str] = field(default_factory=list)
+
+    # Past context (compressed)
+    key_decisions: list[str] = field(default_factory=list)
+    relevant_discoveries: list[str] = field(default_factory=list)

@@ -54,7 +54,7 @@ class Thought(Generic[T]):
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Thought":
+    def from_dict(cls, data: dict[str, Any]) -> Thought:
         """Deserialize thought from dictionary."""
         return cls(
             id=data["id"],
@@ -71,36 +71,59 @@ class Thought(Generic[T]):
 @dataclass
 class Edge:
     """
-    A directed edge in the Graph of Thought.
+    A directed edge connecting two thoughts.
     """
     source_id: str
     target_id: str
+    relation: str = "leads_to"
     weight: float = 1.0
-    edge_type: str = "default"
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def __hash__(self) -> int:
-        return hash((self.source_id, self.target_id))
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize edge to dictionary."""
+        return {
+            "source_id": self.source_id,
+            "target_id": self.target_id,
+            "relation": self.relation,
+            "weight": self.weight,
+            "metadata": self.metadata,
+        }
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Edge):
-            return False
-        return self.source_id == other.source_id and self.target_id == other.target_id
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Edge:
+        """Deserialize edge from dictionary."""
+        return cls(
+            source_id=data["source_id"],
+            target_id=data["target_id"],
+            relation=data.get("relation", "leads_to"),
+            weight=data.get("weight", 1.0),
+            metadata=data.get("metadata", {}),
+        )
 
 
 @dataclass
 class SearchResult(Generic[T]):
-    """Result from a search operation."""
-    thoughts: list[Thought[T]]
-    total_explored: int
+    """Result of a graph search operation."""
+    best_path: list[Thought[T]]
     best_score: float
-    search_metadata: dict[str, Any] = field(default_factory=dict)
+    thoughts_explored: int
+    thoughts_expanded: int
+    total_tokens_used: int
+    wall_time_seconds: float
+    termination_reason: str  # "goal_reached", "max_depth", "budget_exhausted", "timeout", "completed"
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def success(self) -> bool:
+        return self.termination_reason in ("goal_reached", "completed")
 
 
 @dataclass
 class SearchContext(Generic[T]):
-    """Context for search operations."""
-    root_thought: Thought[T]
-    max_depth: int = 5
-    beam_width: int = 3
-    constraints: dict[str, Any] = field(default_factory=dict)
+    """Context passed to generators and evaluators during search."""
+    current_thought: Thought[T]
+    path_to_root: list[Thought[T]]
+    depth: int
+    tokens_remaining: int | None
+    time_remaining_seconds: float | None
+    metadata: dict[str, Any] = field(default_factory=dict)
