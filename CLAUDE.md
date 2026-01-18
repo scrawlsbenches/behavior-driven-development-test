@@ -68,6 +68,29 @@ python -m pytest tests/ -q       # Should show passing architecture tests
 | `ModuleNotFoundError: graph_of_thought` | Run `pip install -e ".[dev]"` to install in editable mode |
 | Tests fail with import errors | Ensure you're in the project root directory |
 
+## Session Startup Checklist
+
+Run these commands at the start of every session to ensure correct state:
+
+```bash
+# 1. Required setup (installs deps, configures git hooks)
+./scripts/setup-dev.sh
+
+# 2. Check git state
+git status
+
+# 3. Read current status
+cat docs/WIP.md
+
+# 4. Verify actual test counts
+behave --dry-run 2>&1 | tail -5
+
+# 5. Compare WIP.md vs actual (detect drift)
+#    If counts don't match, WIP.md needs updating
+```
+
+**Why this matters:** Documentation can drift from actual state between sessions. Always verify before assuming WIP.md is accurate.
+
 ## Project Overview
 
 Graph of Thought is an enterprise AI-assisted reasoning and project management platform with six core business capabilities:
