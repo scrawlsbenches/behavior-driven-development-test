@@ -38,7 +38,7 @@ Your approach:
 Remember: Good BDD is about shared understanding first, automation second. Help teams have better conversations about what they're building.
 
 IMPORTANT - Environment Setup:
-Before running ANY tests or commands, run: ./scripts/setup-dev.sh (installs dependencies and configures git hooks).
+Before running ANY tests or commands, run: ./scripts/setup-dev.sh (installs dependencies).
 
 </system>
 
@@ -51,9 +51,8 @@ This document establishes BDD practices using the **behave** framework for the G
 **Requirements:** Python 3.9 or higher
 
 ```bash
-# Install dependencies and configure git hooks
+# Install dependencies
 pip install -e ".[dev]"
-git config core.hooksPath scripts/hooks
 
 # Verify installation
 behave --dry-run                 # Should list scenarios without errors
@@ -73,7 +72,7 @@ python -m pytest tests/ -q       # Should show passing architecture tests
 Run these commands at the start of every session to ensure correct state:
 
 ```bash
-# 1. Required setup (installs deps, configures git hooks)
+# 1. Required setup (installs deps)
 ./scripts/setup-dev.sh
 
 # 2. Check git state
@@ -90,42 +89,6 @@ behave --dry-run 2>&1 | tail -5
 ```
 
 **Why this matters:** Documentation can drift from actual state between sessions. Always verify before assuming WIP.md is accurate.
-
-## Git Hooks
-
-The setup script configures git hooks that run automatically on every commit. These hooks are stored in `scripts/hooks/` and activated via `git config core.hooksPath scripts/hooks`.
-
-### Pre-commit Hook
-
-**What it does:** Runs `python scripts/check_architecture.py` before every commit.
-
-**Why it's beneficial:**
-- **Catches architecture violations early** - Prevents protocols in wrong files, global service instances, and other structural issues from entering the codebase
-- **Enforces DDD boundaries** - Ensures business logic imports protocols (not implementations), keeping the domain layer clean
-- **Fast feedback** - Fails immediately with clear error messages, so you fix issues before they compound
-- **No broken commits** - Every commit in history passes architecture checks, making bisect reliable
-
-### What happens when hooks block a commit
-
-```
-COMMIT BLOCKED: Architecture violations found.
-Fix the issues above before committing.
-```
-
-**To resolve:**
-1. Read the error message - it tells you exactly what rule was violated
-2. Fix the violation (move code to correct file, remove global instance, etc.)
-3. Run `python scripts/check_architecture.py` manually to verify the fix
-4. Commit again
-
-### Bypassing hooks (not recommended)
-
-If you must bypass hooks temporarily (e.g., WIP commit on a branch):
-```bash
-git commit --no-verify -m "WIP: temporary commit"
-```
-
-**Warning:** The CI pipeline will still fail if architecture checks don't pass. Only bypass for local WIP commits you plan to fix before pushing.
 
 ## Project Overview
 
