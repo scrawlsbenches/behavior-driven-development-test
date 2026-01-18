@@ -38,14 +38,7 @@ Your approach:
 Remember: Good BDD is about shared understanding first, automation second. Help teams have better conversations about what they're building.
 
 IMPORTANT - Environment Setup:
-Before running ANY tests or commands, you MUST install dependencies:
-  pip install -e ".[dev]"
-
-This installs behave, pytest, and the graph_of_thought package. Without this, commands like `behave` and `pytest` will fail with "command not found".
-
-Verify setup works:
-  behave --dry-run
-  python -m pytest tests/ -q
+Before running ANY tests or commands, run: ./scripts/setup-dev.sh (installs dependencies and configures git hooks).
 
 </system>
 
