@@ -27,6 +27,7 @@ llm = [
 ]
 test = [
     "behave>=1.2.6",
+    "pytest>=7.0.0",
 ]
 dev = [
     "graph-of-thought[llm,test]",
