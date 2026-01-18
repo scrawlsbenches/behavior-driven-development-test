@@ -1,4 +1,4 @@
-@wip @ai-reasoning @llm @mvp-p0
+@ai-reasoning @llm @mvp-p0
 Feature: LLM Integration for Thought Generation and Evaluation
   As a Data Scientist
   I want AI-powered generation of follow-up thoughts
@@ -57,7 +57,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     And each thought should be properly formatted
     And no parsing errors should occur
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: LLM response in markdown is parsed correctly
     When the LLM returns thoughts in markdown format:
       """
@@ -69,7 +69,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     Then the JSON should be extracted from markdown
     And 2 thoughts should be created
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Plain text response is parsed as line items
     When the LLM returns plain text:
       """
@@ -116,7 +116,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     And the system should not fail
     And a warning should be logged
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Scores out of range are clamped
     When the LLM returns score 1.5
     Then the score should be clamped to 1.0
@@ -129,7 +129,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
   # Business Rule: Thoughts can be verified for logical consistency and
   # factual accuracy before being presented as conclusions.
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: LLM verifies thought validity
     Given a thought claiming "Redis supports transactions"
     When verification is requested
@@ -140,7 +140,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
       | confidence | 0.9                                      |
       | notes      | Redis supports MULTI/EXEC transactions   |
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Verification identifies invalid claims
     Given a thought with an incorrect claim
     When verification is requested
@@ -151,7 +151,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
       | issues     | ["Contradicts documented behavior"]      |
     And the thought should be flagged for review
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Verification is optional and non-blocking
     Given a thought that hasn't been verified
     Then it should still be usable in exploration
@@ -164,7 +164,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
   # Business Rule: LLM behavior can be tuned for different use cases.
   # Configuration affects token usage and output quality.
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Configuring generation temperature
     Given the default temperature is 0.7
     When Jordan configures temperature 0.9 for creative brainstorming
@@ -175,13 +175,13 @@ Feature: LLM Integration for Thought Generation and Evaluation
     Then generated thoughts should be more conservative
     And they should closely follow the context
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Configuring number of generated thoughts
     When Jordan sets generation count to 8
     Then up to 8 thoughts should be generated per expansion
     And token usage should increase proportionally
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Configuring max tokens per request
     Given a max_tokens setting of 1024
     When generation is requested
@@ -195,7 +195,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
   # Business Rule: LLM failures should not crash the application. Graceful
   # degradation and clear user feedback are required.
 
-  @mvp-p1 @critical
+  @mvp-p1 @wip @critical
   Scenario: Handling LLM timeout gracefully
     Given the LLM service is slow
     When a request times out after 30 seconds
@@ -204,7 +204,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     And partial results should be saved if available
     And the timeout should be logged
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Handling rate limit errors
     Given the LLM rate limit is exceeded
     When a request fails with rate limit error
@@ -213,7 +213,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     And the work chunk should not be blocked
     And the rate limit should be tracked in metrics
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Fallback to alternative model
     Given the primary model "claude-opus-4-5-20251101" is unavailable
     And a fallback model "claude-sonnet-4-20250514" is configured
@@ -223,7 +223,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     And output quality may be different
     And the event should be logged
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Handling malformed LLM response
     When the LLM returns malformed JSON
     Then the system should attempt line-based parsing
@@ -254,7 +254,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
       | project        | Churn Analysis       |
       | operation      | thought_expansion    |
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Cost optimization suggestions
     Given Jordan's project has high LLM costs
     When cost analysis runs
@@ -264,7 +264,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
       | Batch similar expansions                | 15%               |
       | Reduce temperature (fewer tokens)       | 10%               |
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Request blocked when budget exhausted
     Given project budget is exhausted
     When Jordan tries to request LLM generation
@@ -278,7 +278,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
   # Business Rule: Prompts are templated for consistency and can be customized
   # for specific use cases.
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Default generation prompt includes context
     Given the default generation template
     When a prompt is generated for thought expansion
@@ -289,7 +289,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
       | generation_count | How many ideas to generate       |
       | format_instructions| Expected output format         |
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Custom prompt templates for specific domains
     Given a custom template for "Security Analysis":
       """
@@ -310,7 +310,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
   # Provider Flexibility - MVP-P2
   # ===========================================================================
 
-  @mvp-p2
+  @mvp-p2 @wip @wip
   Scenario: Switching between LLM providers
     Given configured providers:
       | provider  | use_case                |
@@ -322,7 +322,7 @@ Feature: LLM Integration for Thought Generation and Evaluation
     And prompt format should adjust if needed
     And metrics should track per-provider usage
 
-  @mvp-p2 @wip
+  @mvp-p2 @wip @wip
   Scenario: Local model for development
     Given a local Ollama instance with llama2
     When developing offline

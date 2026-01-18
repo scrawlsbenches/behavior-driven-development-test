@@ -1,4 +1,4 @@
-@wip @ai-reasoning @search @mvp-p0
+@ai-reasoning @search @mvp-p0
 Feature: Intelligent Solution Search
   As a Data Scientist with limited time and token budget
   I want the system to automatically explore promising thought directions
@@ -47,7 +47,7 @@ Feature: Intelligent Solution Search
     And the best solutions within 5 levels should be returned
     And a note should indicate "Depth limit reached"
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Adjusting search width for complex vs simple problems
     Given a simple problem requiring focused exploration
     When Jordan sets beam width to 2
@@ -65,7 +65,7 @@ Feature: Intelligent Solution Search
   # Business Rule: Best-first always expands the single highest-scoring thought,
   # diving deep into the most promising direction first.
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Deep-dive into most promising direction
     Given an exploration with several initial directions
     When Jordan chooses "deep exploration" mode
@@ -74,7 +74,7 @@ Feature: Intelligent Solution Search
     # Until a solution or dead-end is reached
     And alternative paths should be available for backup
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Backtracking when hitting dead ends
     Given deep exploration has reached a low-scoring dead end
     When the current path scores below 0.2
@@ -115,7 +115,7 @@ Feature: Intelligent Solution Search
     And the best results found so far should be returned
     And Jordan should see estimated time to complete remaining exploration
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Understanding why search stopped
     When any automated search completes
     Then the termination reason should be clearly stated
@@ -155,14 +155,14 @@ Feature: Intelligent Solution Search
     And Jordan should see "This direction was marked as not viable"
     And the pruning reason should be displayed
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Controlling expansion breadth
     Given Jordan wants more creative options
     When Jordan sets expansion count to 8
     Then AI should generate up to 8 follow-up thoughts
     And diversity should be prioritized over similarity
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Context-aware expansion using path history
     Given an exploration path:
       | thought                              |
@@ -178,7 +178,7 @@ Feature: Intelligent Solution Search
   # Advanced Search Strategies - MVP-P2
   # ===========================================================================
 
-  @mvp-p2
+  @mvp-p2 @wip @wip
   Scenario: Iterative deepening for unknown solution depth
     Given a problem where optimal depth is unknown
     When Jordan uses iterative deepening search
@@ -187,7 +187,7 @@ Feature: Intelligent Solution Search
     And continue until goal found or budget exhausted
     And return the best solution at any depth
 
-  @mvp-p2
+  @mvp-p2 @wip @wip
   Scenario: Balancing exploration vs exploitation
     Given an exploration with one strong path (score 0.8) and many unexplored paths
     When Jordan wants balanced exploration
@@ -207,14 +207,14 @@ Feature: Intelligent Solution Search
   # Search Configuration - MVP-P1
   # ===========================================================================
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Saving preferred search settings
     Given Jordan frequently uses beam width 5 with depth 8
     When Jordan saves these as "deep-analysis" preset
     Then the preset should be available for future explorations
     And applying the preset should configure all settings at once
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Search settings appropriate for problem type
     Given different problem types require different search strategies
     Then recommended settings should be:

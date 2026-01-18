@@ -37,13 +37,43 @@ Your approach:
 
 Remember: Good BDD is about shared understanding first, automation second. Help teams have better conversations about what they're building.
 
+IMPORTANT - Environment Setup:
+Before running ANY tests or commands, you MUST install dependencies:
+  pip install -e ".[dev]"
+
+This installs behave, pytest, and the graph_of_thought package. Without this, commands like `behave` and `pytest` will fail with "command not found".
+
+Verify setup works:
+  behave --dry-run
+  python -m pytest tests/ -q
+
 </system>
 
 # CLAUDE.md - Behave BDD Guide for Graph of Thought
 
-> **Quick Start:** Run `./scripts/setup-dev.sh` after cloning to configure git hooks and dependencies.
-
 This document establishes BDD practices using the **behave** framework for the Graph of Thought enterprise application. Follow these guidelines when developing features, writing stories, and collaborating on this codebase.
+
+## Environment Setup
+
+**Requirements:** Python 3.9 or higher
+
+```bash
+# Install dependencies and configure git hooks
+pip install -e ".[dev]"
+git config core.hooksPath scripts/hooks
+
+# Verify installation
+behave --dry-run                 # Should list scenarios without errors
+python -m pytest tests/ -q       # Should show passing architecture tests
+```
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| `behave: command not found` | Run `pip install -e ".[dev]"` |
+| `ModuleNotFoundError: graph_of_thought` | Run `pip install -e ".[dev]"` to install in editable mode |
+| Tests fail with import errors | Ensure you're in the project root directory |
 
 ## Project Overview
 
@@ -291,6 +321,44 @@ def before_scenario(context, scenario):
     context.user = None
     context.result = None
     context.exception = None
+```
+
+### Testing Infrastructure
+
+**Data Persistence Testing:** Use an in-memory filesystem for persistence tests. This allows:
+- Full control over file operations (create, read, write, delete)
+- Verification of exact actions performed during save/load
+- Simulation of failure scenarios (disk full, permissions, corruption)
+- Fast tests without actual disk I/O
+- Deterministic behavior across test runs
+
+```python
+# Example: In-memory filesystem for persistence testing
+from io import StringIO, BytesIO
+
+class InMemoryFileSystem:
+    """Mock filesystem for testing persistence operations."""
+
+    def __init__(self):
+        self.files: Dict[str, bytes] = {}
+        self.operations: List[str] = []  # Track all operations for assertions
+
+    def write(self, path: str, content: bytes) -> None:
+        self.files[path] = content
+        self.operations.append(f"write:{path}")
+
+    def read(self, path: str) -> bytes:
+        self.operations.append(f"read:{path}")
+        if path not in self.files:
+            raise FileNotFoundError(path)
+        return self.files[path]
+
+    def exists(self, path: str) -> bool:
+        return path in self.files
+
+    def assert_written(self, path: str) -> None:
+        """Assert a specific file was written."""
+        assert f"write:{path}" in self.operations
 ```
 
 ### Step Definition Patterns
