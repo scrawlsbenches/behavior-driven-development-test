@@ -383,11 +383,10 @@ class TestCoreLayerDependencies:
 
     def test_core_types_imports_only_from_domain(self):
         """
-        core/types.py should only import from domain/ for model re-exports.
+        core/types.py should only contain TypeVar definitions.
 
-        # NOTE: types.py exists for backwards compatibility, re-exporting
-        # domain models. It should not define its own models or import
-        # from services.
+        NOTE: types.py previously re-exported domain models but this was
+        removed. It now only contains T = TypeVar("T").
         """
         package_root = get_package_root()
         types_file = package_root / "core" / "types.py"
@@ -434,9 +433,8 @@ class TestServicesLayerDependencies:
     - Domain layer modules
     - Core layer modules (protocols, types)
 
-    # NOTE: services/ is the outermost layer and can depend on both domain
-    # and core. However, service implementations should prefer importing
-    # domain models directly rather than through core/types.py re-exports.
+    NOTE: services/ is the outermost layer and can depend on both domain
+    and core. Domain models should be imported from graph_of_thought.domain.
     """
 
     def test_services_protocols_imports_from_domain(self):
@@ -468,12 +466,11 @@ class TestServicesLayerDependencies:
 
     def test_services_implementations_follow_hierarchy(self):
         """
-        Service implementations should import through protocols, not directly from domain.
+        Service implementations can import from domain or protocols.
 
-        # NOTE: This is a best practice check. Implementations should use
-        # protocols.py as the interface, getting domain models re-exported
-        # from there rather than importing domain directly (with exceptions
-        # for models not exposed via protocols).
+        NOTE: Implementations should import domain models from
+        graph_of_thought.domain directly, not through protocols.
+        Protocols define service interfaces, not model re-exports.
         """
         package_root = get_package_root()
         implementations_dir = package_root / "services" / "implementations"

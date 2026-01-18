@@ -78,7 +78,8 @@ graph_of_thought/
 - [x] Create re-exports in `domain/models/__init__.py`
 
 ### Step 4: Update core/ imports
-- [x] Update `core/types.py` to import from domain (re-exports for backwards compatibility)
+- [x] Update `core/types.py` to only contain `T = TypeVar("T")`
+- [x] Update `core/__init__.py` to import domain types from `graph_of_thought.domain`
 - [x] `core/protocols.py` unchanged (no domain model dependencies)
 
 ### Step 5: Update services/ imports
