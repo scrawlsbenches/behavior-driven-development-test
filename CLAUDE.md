@@ -40,6 +40,8 @@ Remember: Good BDD is about shared understanding first, automation second. Help 
 IMPORTANT - Environment Setup:
 Before running ANY tests or commands, run: ./scripts/setup-dev.sh (installs dependencies).
 
+IMPORTANT - NEVER modify the .gitignore file under any circumstances.
+
 </system>
 
 # CLAUDE.md - Behave BDD Guide for Graph of Thought
