@@ -15,7 +15,7 @@ from graph_of_thought.services.implementations import (
     SimpleQuestionService,
     SimpleCommunicationService,
 )
-from graph_of_thought.services.protocols import (
+from graph_of_thought.domain import (
     ApprovalStatus,
     Priority,
     ResourceType,

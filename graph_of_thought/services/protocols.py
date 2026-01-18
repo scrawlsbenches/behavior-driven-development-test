@@ -9,8 +9,7 @@ ARCHITECTURE NOTE:
     and gracefully degrades when services are missing. This allows incremental
     adoption - you can start with just the facade and add services as needed.
 
-NOTE: Domain models and enums are now imported from graph_of_thought.domain.
-This module re-exports them for backwards compatibility.
+Domain models and enums should be imported from graph_of_thought.domain.
 """
 
 from __future__ import annotations
@@ -18,13 +17,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Protocol, runtime_checkable
 
-# Import domain models and enums from the domain layer
-from graph_of_thought.domain.enums import (
+# Domain types used in protocol method signatures
+from graph_of_thought.domain import (
     ApprovalStatus,
     Priority,
     ResourceType,
-)
-from graph_of_thought.domain.models import (
     ResourceBudget,
     Decision,
     KnowledgeEntry,
@@ -32,18 +29,7 @@ from graph_of_thought.domain.models import (
     HandoffPackage,
 )
 
-# Re-export for backwards compatibility
 __all__ = [
-    # Enums
-    "ApprovalStatus",
-    "Priority",
-    "ResourceType",
-    # Models
-    "ResourceBudget",
-    "Decision",
-    "KnowledgeEntry",
-    "QuestionTicket",
-    "HandoffPackage",
     # Service Protocols
     "GovernanceService",
     "ProjectManagementService",

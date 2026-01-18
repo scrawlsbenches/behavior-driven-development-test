@@ -1,9 +1,11 @@
 from __future__ import annotations
 """
 Core types and protocols for Graph of Thought.
+
+Domain models and enums are imported from graph_of_thought.domain.
 """
 
-from .types import (
+from graph_of_thought.domain import (
     Thought,
     ThoughtStatus,
     Edge,

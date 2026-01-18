@@ -122,7 +122,7 @@ features/
 ├── steps/                              # Step definitions
 │   └── *.py
 │
-└── [legacy features]                   # Original technical features (deprecated)
+└── *.feature                           # Foundation API tests (library-level)
 
 behave.ini                              # Behave configuration
 ```
@@ -418,6 +418,23 @@ Architecture tests answer: "Is the code organized correctly?"
 There's no persona for "the codebase itself." Architecture enforcement is internal developer tooling - same category as linting and type checking. Mixing it into behave features would dilute the business focus.
 
 **Rule of thumb:** If you can't identify a persona from `PERSONAS.md` who benefits from the behavior, it's probably developer tooling, not a BDD feature.
+
+## Planning Documents
+
+Project planning lives in `docs/`. Update these files as work progresses:
+
+| Document | Update When | What to Update |
+|----------|-------------|----------------|
+| `ROADMAP.md` | Milestones change | Vision, capabilities, success metrics |
+| `SPRINTS.md` | Sprint boundaries | Move items between sprints, update status |
+| `NEXT_STEPS.md` | Completing tasks | Remove done items, add newly discovered work |
+| `WIP.md` | Daily | Current status, test counts, active work |
+
+**Update frequency:**
+- `WIP.md` - Update when starting or finishing work
+- `NEXT_STEPS.md` - Update when completing a prioritized item
+- `SPRINTS.md` - Update at sprint boundaries or when scope changes
+- `ROADMAP.md` - Update when strategic direction shifts
 
 ## Resources
 
