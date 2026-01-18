@@ -24,8 +24,8 @@ Current state of active development.
 
 ```
 pytest:  201 passed
-behave:  209 scenarios passed (stable)
-         374 scenarios skipped (@wip, @post-mvp)
+behave:  255 scenarios passed (stable)
+         328 scenarios skipped (@wip, @post-mvp)
 ```
 
 ## Features with @wip Tag
