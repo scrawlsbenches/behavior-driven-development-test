@@ -33,6 +33,12 @@ from .protocols import (
     GraphEvent,
     EventHandler,
     EventEmitter,
+    FileSystem,
+)
+
+from .defaults import (
+    InMemoryFileSystem,
+    RealFileSystem,
 )
 
 from .exceptions import (
@@ -80,6 +86,10 @@ __all__ = [
     "GraphEvent",
     "EventHandler",
     "EventEmitter",
+    "FileSystem",
+    # FileSystem implementations
+    "InMemoryFileSystem",
+    "RealFileSystem",
     # Exceptions
     "GraphError",
     "NodeNotFoundError",

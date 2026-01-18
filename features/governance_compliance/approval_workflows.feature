@@ -110,7 +110,7 @@ Feature: Approval Workflows and Policy Enforcement
     And the denial reason should be preserved in audit log
     And Casey should be able to submit a new request addressing concerns
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Approval request times out
     Given an approval request pending for 24 hours
     And a policy with 24-hour expiration
@@ -126,7 +126,7 @@ Feature: Approval Workflows and Policy Enforcement
   # Business Rule: Some actions require approval from multiple parties.
   # Policies can specify "all required" or "any one" approval types.
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Action requiring approval from all specified parties
     Given a policy for "major_architecture_change" requiring all of:
       | approver          | role                  |
@@ -138,7 +138,7 @@ Feature: Approval Workflows and Policy Enforcement
     And the action should remain blocked until all approve
     And partial approval status should be visible
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Tracking partial approvals
     Given a request requiring approval from tech-lead, security, and product
     And tech-lead has approved
@@ -149,7 +149,7 @@ Feature: Approval Workflows and Policy Enforcement
       | security-team | pending  |                       |                      |
       | product-owner | pending  |                       |                      |
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Action requiring any one approver
     Given a policy for "config_change" requiring any one of:
       | approver          |
@@ -194,7 +194,7 @@ Feature: Approval Workflows and Policy Enforcement
     And they should include complete decision context
     And the query itself should be logged for audit
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Audit log retention and archival
     Given audit logs older than 7 years
     When the retention job runs
@@ -208,7 +208,7 @@ Feature: Approval Workflows and Policy Enforcement
   # Business Rule: When policies are violated (intentionally or accidentally),
   # appropriate stakeholders must be notified and incidents tracked.
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Detecting and reporting policy bypass attempt
     Given a policy blocking direct database access
     When Casey attempts direct database modification
@@ -223,7 +223,7 @@ Feature: Approval Workflows and Policy Enforcement
       | policy_violated | no_direct_db_access                |
       | outcome         | blocked                            |
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Policy exception request
     Given a policy blocks an action Casey legitimately needs
     When Casey requests a policy exception with justification
@@ -242,7 +242,7 @@ Feature: Approval Workflows and Policy Enforcement
   # Business Rule: The system must generate reports demonstrating compliance
   # with relevant frameworks (SOC2, GDPR, HIPAA, etc.)
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Generating SOC2 compliance report
     Given audit data for Q4 2023
     When Riley requests a SOC2 access control report
@@ -255,7 +255,7 @@ Feature: Approval Workflows and Policy Enforcement
     And the report should be exportable as PDF
     And evidence links should be included
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Continuous compliance monitoring dashboard
     Given real-time governance data
     When Morgan views the compliance dashboard
@@ -273,7 +273,7 @@ Feature: Approval Workflows and Policy Enforcement
   # Business Rule: Users have roles that determine their permissions.
   # Roles are assigned by administrators and tracked in audit logs.
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Role determines what actions user can perform
     Given the following role permissions:
       | role            | can_approve | can_deploy | can_modify_policy |
@@ -285,7 +285,7 @@ Feature: Approval Workflows and Policy Enforcement
     Then the action should be denied
     And they should see "You don't have permission to approve"
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Assigning roles to users
     Given Alex is a platform administrator
     When Alex assigns "tech-lead" role to Casey
@@ -293,7 +293,7 @@ Feature: Approval Workflows and Policy Enforcement
     And the role assignment should be logged
     And Casey should be notified of their new role
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Role escalation for emergency situations
     Given Casey needs temporary elevated permissions for incident response
     When Alex grants temporary "admin" role for 4 hours
@@ -306,7 +306,7 @@ Feature: Approval Workflows and Policy Enforcement
   # Multi-Tenancy Governance - MVP-P2
   # ===========================================================================
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Tenant-specific policies
     Given tenants "AcmeCorp" and "GlobalInc" with different compliance needs
     When AcmeCorp requires HIPAA compliance

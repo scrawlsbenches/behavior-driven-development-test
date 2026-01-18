@@ -24,20 +24,26 @@ Current state of active development.
 
 ```
 pytest:  201 passed
-behave:  209 scenarios passed (stable)
-         374 scenarios skipped (@wip, @post-mvp)
+behave:  255 scenarios passed (stable)
+         328 scenarios skipped (@wip, @post-mvp)
 ```
 
-## Features with @wip Tag
+## Features with @wip Scenarios
 
-These features have step definitions but retain @wip tag:
+These features have MVP-P0 scenarios passing, but MVP-P1/P2 scenarios tagged @wip
+that still need step definitions:
 
-- [ ] `thought_exploration.feature` - ready for tag removal
-- [ ] `intelligent_search.feature` - ready for tag removal
-- [ ] `llm_integration.feature` - ready for tag removal
-- [ ] `approval_workflows.feature` - ready for tag removal
-- [ ] `budget_and_consumption.feature` - ready for tag removal
-- [ ] `project_lifecycle.feature` - ready for tag removal
+| Feature | MVP-P0 Status | @wip Scenarios | Need Step Definitions |
+|---------|---------------|----------------|----------------------|
+| `thought_exploration.feature` | 9 passing | 10 | Yes |
+| `intelligent_search.feature` | 8 passing | 11 | Yes |
+| `llm_integration.feature` | 7 passing | 21 | Yes |
+| `approval_workflows.feature` | 8 passing | 15 | Yes |
+| `budget_and_consumption.feature` | 7 passing | 15 | Yes |
+| `project_lifecycle.feature` | 7 passing | 11 | Yes |
+
+Note: The @wip tags on these scenarios are correct - they mark scenarios that
+don't have step definitions yet. Do NOT remove @wip until step definitions exist.
 
 ## Features Needing Step Definitions
 

@@ -736,7 +736,7 @@ class LoggingEventHandler(Generic[T]):
 
     def __init__(self, logger: Logger | None = None):
         self._logger = logger or StructuredLogger("graph_events")
-    
+
     async def handle(self, event: GraphEvent[T]) -> None:
         thought_id = event.thought.id if event.thought else None
         self._logger.debug(
@@ -744,3 +744,175 @@ class LoggingEventHandler(Generic[T]):
             thought_id=thought_id,
             metadata=event.metadata,
         )
+
+
+# =============================================================================
+# FileSystem Implementations
+# =============================================================================
+
+class InMemoryFileSystem:
+    """
+    In-memory filesystem for testing.
+
+    Provides:
+    - Fast tests without disk I/O
+    - Deterministic behavior
+    - Operation tracking for assertions
+    - Failure simulation capability
+
+    Example:
+        fs = InMemoryFileSystem()
+        fs.write("/data/test.json", b'{"key": "value"}')
+        assert fs.exists("/data/test.json")
+        fs.assert_written("/data/test.json")
+    """
+
+    def __init__(self):
+        self.files: dict[str, bytes] = {}
+        self.directories: set[str] = {"/"}
+        self.operations: list[str] = []
+        self._failure_paths: dict[str, Exception] = {}
+
+    def simulate_failure(self, path: str, error: Exception) -> None:
+        """Configure a path to raise an error when accessed."""
+        self._failure_paths[path] = error
+
+    def clear_failures(self) -> None:
+        """Clear all simulated failures."""
+        self._failure_paths.clear()
+
+    def _check_failure(self, path: str) -> None:
+        """Raise simulated failure if configured."""
+        if path in self._failure_paths:
+            raise self._failure_paths[path]
+
+    def write(self, path: str, content: bytes) -> None:
+        """Write content to a file."""
+        self._check_failure(path)
+        self.files[path] = content
+        self.operations.append(f"write:{path}")
+
+    def read(self, path: str) -> bytes:
+        """Read content from a file."""
+        self._check_failure(path)
+        self.operations.append(f"read:{path}")
+        if path not in self.files:
+            raise FileNotFoundError(path)
+        return self.files[path]
+
+    def exists(self, path: str) -> bool:
+        """Check if a file or directory exists."""
+        return path in self.files or path in self.directories
+
+    def delete(self, path: str) -> bool:
+        """Delete a file."""
+        self._check_failure(path)
+        if path in self.files:
+            del self.files[path]
+            self.operations.append(f"delete:{path}")
+            return True
+        return False
+
+    def mkdir(self, path: str, parents: bool = False) -> None:
+        """Create a directory."""
+        self._check_failure(path)
+        if parents:
+            # Create all parent directories
+            parts = path.split("/")
+            for i in range(1, len(parts) + 1):
+                self.directories.add("/".join(parts[:i]) or "/")
+        else:
+            self.directories.add(path)
+        self.operations.append(f"mkdir:{path}")
+
+    def list_dir(self, path: str) -> list[str]:
+        """List files in a directory."""
+        self._check_failure(path)
+        prefix = path.rstrip("/") + "/"
+        results = []
+        for file_path in self.files:
+            if file_path.startswith(prefix):
+                # Get the next path component after the prefix
+                remainder = file_path[len(prefix):]
+                if "/" not in remainder:
+                    results.append(remainder)
+        return results
+
+    def rmtree(self, path: str) -> None:
+        """Recursively delete a directory tree."""
+        self._check_failure(path)
+        prefix = path.rstrip("/") + "/"
+        to_delete = [p for p in self.files if p.startswith(prefix) or p == path]
+        for p in to_delete:
+            del self.files[p]
+        self.directories.discard(path)
+        self.operations.append(f"rmtree:{path}")
+
+    # Assertion helpers for tests
+    def assert_written(self, path: str) -> None:
+        """Assert a specific file was written."""
+        assert f"write:{path}" in self.operations, f"File {path} was not written"
+
+    def assert_read(self, path: str) -> None:
+        """Assert a specific file was read."""
+        assert f"read:{path}" in self.operations, f"File {path} was not read"
+
+    def assert_deleted(self, path: str) -> None:
+        """Assert a specific file was deleted."""
+        assert f"delete:{path}" in self.operations, f"File {path} was not deleted"
+
+    def clear(self) -> None:
+        """Clear all files and operations."""
+        self.files.clear()
+        self.directories = {"/"}
+        self.operations.clear()
+        self._failure_paths.clear()
+
+
+class RealFileSystem:
+    """
+    Real filesystem implementation for production use.
+
+    Wraps standard Python file operations to match the FileSystem protocol.
+    """
+
+    def write(self, path: str, content: bytes) -> None:
+        """Write content to a file."""
+        from pathlib import Path
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(content)
+
+    def read(self, path: str) -> bytes:
+        """Read content from a file."""
+        with open(path, "rb") as f:
+            return f.read()
+
+    def exists(self, path: str) -> bool:
+        """Check if a file exists."""
+        from pathlib import Path
+        return Path(path).exists()
+
+    def delete(self, path: str) -> bool:
+        """Delete a file."""
+        from pathlib import Path
+        p = Path(path)
+        if p.exists():
+            p.unlink()
+            return True
+        return False
+
+    def mkdir(self, path: str, parents: bool = False) -> None:
+        """Create a directory."""
+        from pathlib import Path
+        Path(path).mkdir(parents=parents, exist_ok=True)
+
+    def list_dir(self, path: str) -> list[str]:
+        """List files in a directory."""
+        from pathlib import Path
+        return [p.name for p in Path(path).iterdir()]
+
+    def rmtree(self, path: str) -> None:
+        """Recursively delete a directory tree."""
+        import shutil
+        shutil.rmtree(path, ignore_errors=True)

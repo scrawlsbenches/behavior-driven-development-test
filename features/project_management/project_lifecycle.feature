@@ -81,7 +81,7 @@ Feature: AI-Assisted Project Lifecycle
     And total duration and tokens used should be recorded
     And the project timeline should be updated
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Work chunk discovers a blocker
     Given an active work chunk "Implement caching layer"
     When Casey encounters a blocker requiring external input
@@ -91,7 +91,7 @@ Feature: AI-Assisted Project Lifecycle
     And the Engineering Manager should be notified
     And the blocking time should be tracked separately
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Pausing and resuming work chunks
     Given an active work chunk that Jordan needs to pause
     When Jordan pauses the chunk for "end of day"
@@ -140,7 +140,7 @@ Feature: AI-Assisted Project Lifecycle
       """
     And all previous exploration work should be accessible
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Handoff from AI session to human team member
     Given an AI session has completed initial analysis
     When the AI prepares a handoff for human review
@@ -153,7 +153,7 @@ Feature: AI-Assisted Project Lifecycle
       | attachments          | Relevant artifacts and data                |
     And the human should be able to continue without re-reading everything
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Handoff from human back to AI session
     Given a human team member has made decisions offline
     When they return to the AI session with updates
@@ -170,7 +170,7 @@ Feature: AI-Assisted Project Lifecycle
   # Business Rule: Multiple team members may work on the same project.
   # Their work should be coordinated and visible to the team.
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Multiple team members working on same project
     Given project "Large Migration" with team members Jordan and Casey
     When Jordan starts a chunk "Analyze source schema"
@@ -179,7 +179,7 @@ Feature: AI-Assisted Project Lifecycle
     And there should be no resource conflicts
     And combined token usage should be tracked
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Seeing team activity on a project
     Given project "API Optimization" with recent activity
     When Alex views the activity feed
@@ -190,7 +190,7 @@ Feature: AI-Assisted Project Lifecycle
       | 2 hours ago | Jordan | Made decision "Use Redis Cluster"    |
     And filter options should be available
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Mentioning team members in project context
     Given Jordan is working on a chunk and needs Casey's input
     When Jordan mentions "@casey review the connection pool settings"
@@ -202,7 +202,7 @@ Feature: AI-Assisted Project Lifecycle
   # Project Completion and Archival - MVP-P1
   # ===========================================================================
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Closing a project with final summary
     Given project "Q1 Optimization" has achieved its objectives
     When Alex closes the project with outcome summary:
@@ -216,7 +216,7 @@ Feature: AI-Assisted Project Lifecycle
     And the final metrics should be recorded for reporting
     And team members should be notified of completion
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Archiving project for future reference
     Given a completed project from 6 months ago
     When the retention period elapses

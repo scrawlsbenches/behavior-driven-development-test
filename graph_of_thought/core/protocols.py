@@ -545,3 +545,51 @@ class EventEmitter(Protocol[T]):
     async def emit(self, event: GraphEvent[T]) -> None:
         """Emit an event to all subscribers."""
         ...
+
+
+# =============================================================================
+# FileSystem Protocol
+# =============================================================================
+
+class FileSystem(Protocol):
+    """
+    Protocol for filesystem operations.
+
+    Allows dependency injection of filesystem for testing:
+    - Use RealFileSystem for production
+    - Use InMemoryFileSystem for testing (fast, deterministic, failure simulation)
+
+    Example usage in tests:
+        fs = InMemoryFileSystem()
+        persistence = FilePersistence(base_dir="/data", filesystem=fs)
+        # ... run test ...
+        fs.assert_written("/data/graph.json")
+    """
+
+    def write(self, path: str, content: bytes) -> None:
+        """Write content to a file."""
+        ...
+
+    def read(self, path: str) -> bytes:
+        """Read content from a file. Raises FileNotFoundError if not found."""
+        ...
+
+    def exists(self, path: str) -> bool:
+        """Check if a file exists."""
+        ...
+
+    def delete(self, path: str) -> bool:
+        """Delete a file. Returns True if deleted, False if not found."""
+        ...
+
+    def mkdir(self, path: str, parents: bool = False) -> None:
+        """Create a directory. If parents=True, create parent directories."""
+        ...
+
+    def list_dir(self, path: str) -> list[str]:
+        """List files in a directory."""
+        ...
+
+    def rmtree(self, path: str) -> None:
+        """Recursively delete a directory tree."""
+        ...

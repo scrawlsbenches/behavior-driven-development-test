@@ -82,7 +82,7 @@ Feature: Token Budget and Consumption Management
       | days_at_pace        | 3.7 days                   |
       | project_percent     | 45% consumed               |
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Consumption report for project review
     Given project "Churn Analysis" has been running for 2 weeks
     When Alex requests a consumption report
@@ -120,7 +120,7 @@ Feature: Token Budget and Consumption Management
     And a budget increase request form should be offered
     And the blocked attempt should be logged
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Configurable warning thresholds
     Given Alex configures project warnings at 75% and 90%
     Then alerts should trigger at:
@@ -129,7 +129,7 @@ Feature: Token Budget and Consumption Management
       | 90%       | Dashboard warning + manager notification    |
       | 100%      | Hard stop + require budget increase         |
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Emergency budget extension for critical work
     Given project "Production Incident" has exhausted its budget
     And Casey needs to continue debugging
@@ -145,7 +145,7 @@ Feature: Token Budget and Consumption Management
   # Business Rule: Teams need to predict when budgets will be exhausted
   # and plan future allocations based on historical consumption patterns.
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Predicting budget exhaustion date
     Given project "Analysis" consuming 5000 tokens daily on average
     And 50000 tokens remaining
@@ -154,7 +154,7 @@ Feature: Token Budget and Consumption Management
     And a confidence interval should be shown
     And comparison to project deadline should be highlighted
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Quarterly cost forecasting for team
     Given Data Science team's historical consumption:
       | month     | tokens_used |
@@ -166,7 +166,7 @@ Feature: Token Budget and Consumption Management
     And seasonal factors should be considered
     And the forecast should include uncertainty bounds
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Cost optimization recommendations
     Given a project with usage patterns showing inefficiencies
     When the system analyzes consumption
@@ -182,7 +182,7 @@ Feature: Token Budget and Consumption Management
   # Business Rule: Budget increases require appropriate approval based on
   # amount and organizational policies.
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Requesting budget increase
     Given project "Analysis" needs additional 50000 tokens
     When Jordan submits a budget increase request with justification:
@@ -195,7 +195,7 @@ Feature: Token Budget and Consumption Management
     And Alex should see the request with full context
     And a notification should be sent
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Approving budget increase
     Given a pending budget request for 50000 tokens
     When Alex approves the request
@@ -208,7 +208,7 @@ Feature: Token Budget and Consumption Management
       | justification   | Segment analysis requirement   |
     And Jordan should be notified of approval
 
-  @mvp-p1 @wip @wip
+  @mvp-p1 @wip
   Scenario: Large budget requests require Finance approval
     Given a budget increase request for 200000 tokens
     And organizational policy requiring Finance approval above 100000
@@ -221,7 +221,7 @@ Feature: Token Budget and Consumption Management
   # Cost Attribution and Chargeback - MVP-P2
   # ===========================================================================
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Monthly cost report for department chargeback
     Given multiple teams have consumed tokens in January:
       | team            | tokens    | cost_rate | total_cost |
@@ -233,7 +233,7 @@ Feature: Token Budget and Consumption Management
     And the report should be exportable to accounting systems
     And each team's manager should receive their summary
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Cost attribution by client project
     Given a consulting engagement using AI capabilities
     When tokens are consumed on client project "Acme Consulting"
@@ -245,7 +245,7 @@ Feature: Token Budget and Consumption Management
   # Resource Limits Beyond Tokens - MVP-P2
   # ===========================================================================
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Limiting concurrent AI sessions
     Given team policy of maximum 5 concurrent sessions
     When a 6th team member tries to start an AI session
@@ -253,7 +253,7 @@ Feature: Token Budget and Consumption Management
     And they should see "Queue position: 1. Estimated wait: 5 minutes"
     And they should have option to request priority
 
-  @mvp-p2 @wip @wip
+  @mvp-p2 @wip
   Scenario: Rate limiting requests per minute
     Given a rate limit of 20 requests per minute
     When Jordan exceeds 20 requests in 60 seconds
