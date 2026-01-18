@@ -1,9 +1,28 @@
 """
-Adaptive Search Package - Self-Aware Graph of Thought
+Adaptive Search Package - LLM-Driven Graph of Thought
 ======================================================
 
-This package implements a self-aware, negotiating search system that knows its
-constraints, monitors progress, and can request resources or propose compromises.
+This package implements a search system where **LLMs reason at every decision
+point**. Instead of hardcoded rules and thresholds, the LLM thinks through
+each situation and decides what to do.
+
+THE FUNDAMENTAL INSIGHT
+-----------------------
+
+We CANNOT predetermine the right decisions with code:
+
+    # WRONG: Code decides with fixed thresholds
+    if progress_rate < 0.05:
+        return STOP
+
+    # RIGHT: LLM reasons about the situation
+    decision = await reasoner.reason(
+        "Should we continue deeper?",
+        context=full_situation,
+    )
+
+The unknown cannot be handled with predetermined rules. The LLM must
+reason through it at runtime, with full context.
 
 PACKAGE OVERVIEW
 ----------------
@@ -224,9 +243,39 @@ DESIGN PRINCIPLES
 """
 
 # =============================================================================
-# PUBLIC API
+# PUBLIC API - LLM REASONING (PRIMARY)
 # =============================================================================
 
+# The core insight: LLMs should reason at decision points, not code
+from graph_of_thought_v2.adaptive.reasoning import (
+    # Context for reasoning
+    ReasoningContext,
+    ReasoningResult,
+
+    # The reasoners - LLM at every decision point
+    Reasoner,           # Protocol
+    LLMReasoner,        # Base class
+    DepthReasoner,      # "Should we continue deeper?"
+    BudgetReasoner,     # "Do we have enough resources?"
+    FailureReasoner,    # "What could go wrong?"
+    CompromiseReasoner, # "Is this good enough?"
+    MetaReasoner,       # "How is the overall search?"
+    PathReasoner,       # "Which paths are promising?"
+)
+
+# The LLM-driven controller
+from graph_of_thought_v2.adaptive.llm_controller import (
+    LLMDrivenController,
+    LLMSearchResult,
+    SearchConfig,
+)
+
+
+# =============================================================================
+# SUPPORTING COMPONENTS
+# =============================================================================
+
+# Data structures (still useful, but decisions come from LLM)
 from graph_of_thought_v2.adaptive.depth import (
     DepthPolicy,
     DepthDecision,
@@ -265,6 +314,7 @@ from graph_of_thought_v2.adaptive.feedback import (
     AutomaticFeedbackHandler,
 )
 
+# Legacy code-based controller (for comparison/fallback)
 from graph_of_thought_v2.adaptive.controller import (
     AdaptiveSearchController,
     AdaptiveSearchResult,
@@ -280,35 +330,69 @@ from graph_of_thought_v2.adaptive.profiles import (
 )
 
 __all__ = [
-    # Depth management
+    # ==========================================================================
+    # LLM REASONING (PRIMARY API)
+    # ==========================================================================
+
+    # Reasoning context and results
+    "ReasoningContext",
+    "ReasoningResult",
+
+    # The reasoners - LLM decides at every intersection
+    "Reasoner",
+    "LLMReasoner",
+    "DepthReasoner",
+    "BudgetReasoner",
+    "FailureReasoner",
+    "CompromiseReasoner",
+    "MetaReasoner",
+    "PathReasoner",
+
+    # LLM-driven controller
+    "LLMDrivenController",
+    "LLMSearchResult",
+    "SearchConfig",
+
+    # ==========================================================================
+    # SUPPORTING COMPONENTS
+    # ==========================================================================
+
+    # Depth (data structures)
     "DepthPolicy",
     "DepthDecision",
     "DepthAction",
-    # Budget negotiation
+
+    # Budget (data structures)
     "BudgetNegotiator",
     "BudgetSituation",
     "BudgetNegotiationResult",
     "BudgetDecision",
+
     # Compromise
     "CompromiseSolution",
+
     # Failure anticipation
     "FailureMode",
     "FailureAnticipator",
     "AnticipatedFailure",
     "FailureAssessment",
+
     # Grounding
     "Grounder",
     "GroundingResult",
     "GroundingContext",
     "MockGrounder",
-    # Feedback
+
+    # Feedback (legacy)
     "FeedbackHandler",
     "FeedbackDirective",
     "BudgetResponse",
     "AutomaticFeedbackHandler",
-    # Controller
+
+    # Legacy controller
     "AdaptiveSearchController",
     "AdaptiveSearchResult",
+
     # Profiles
     "DomainProfile",
     "CODE_GENERATION_PROFILE",
