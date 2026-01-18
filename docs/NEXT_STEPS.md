@@ -54,12 +54,6 @@ Prioritized by impact - what gets us furthest, fastest.
 - Metrics for token consumption, latency, errors
 - Trace propagation across service boundaries
 
-### 5. Mark DDD Refactoring Plan Complete
-**Why:** Housekeeping - the tests exist, mark the task done.
-
-**File:** `docs/DDD_REFACTORING_PLAN.md`
-- Step 8 tests exist in `tests/test_domain_*.py`
-
 ## Validation Commands
 
 ```bash

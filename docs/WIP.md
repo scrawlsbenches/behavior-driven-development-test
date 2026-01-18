@@ -13,6 +13,7 @@ Current state of active development.
 
 | Item | Completed | Notes |
 |------|-----------|-------|
+| Backwards Compatibility Cleanup | Sprint 1-2 | Single source of truth: graph_of_thought.domain |
 | DDD Architecture Refactor | Sprint 1-2 | Domain layer, split services |
 | AI Reasoning Steps | Sprint 1-2 | 24 scenarios |
 | Governance Steps | Sprint 1-2 | 8 scenarios |
@@ -22,7 +23,7 @@ Current state of active development.
 ## Test Status
 
 ```
-pytest:  232 passed
+pytest:  201 passed
 behave:  209 scenarios passed (stable)
          374 scenarios skipped (@wip, @post-mvp)
 ```
