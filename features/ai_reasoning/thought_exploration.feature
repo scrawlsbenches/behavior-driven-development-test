@@ -1,4 +1,4 @@
-@wip @ai-reasoning @mvp-p0
+@ai-reasoning @mvp-p0
 Feature: AI-Assisted Thought Exploration
   As a Data Scientist exploring complex problems
   I want to create and navigate a graph of interconnected thoughts
@@ -69,7 +69,7 @@ Feature: AI-Assisted Thought Exploration
     Then all 5 depth-2 thoughts should be listed
     And they should be sorted by their promise score
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Identifying dead-end explorations
     Given an exploration with some low-scoring thought chains
     When Jordan asks "Which paths aren't worth pursuing?"
@@ -82,7 +82,7 @@ Feature: AI-Assisted Thought Exploration
   # Business Rule: Not all thoughts are equally valuable. The system should
   # help users focus on promising directions and prune dead ends.
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Marking a thought direction as not worth pursuing
     Given Jordan is exploring "Improve customer retention"
     And has generated the thought "Reduce product price by 50%"
@@ -91,7 +91,7 @@ Feature: AI-Assisted Thought Exploration
     And future expansions should not build on this thought
     And the pruning reason should be recorded for learning
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Merging duplicate or similar thoughts
     Given an exploration with similar thoughts:
       | thought                           | score |
@@ -103,7 +103,7 @@ Feature: AI-Assisted Thought Exploration
     And the original thoughts should be marked as merged
     And all child thoughts should now connect to the merged thought
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Scoring thoughts to prioritize exploration
     Given thoughts with different promise levels:
       | thought                        |
@@ -136,7 +136,7 @@ Feature: AI-Assisted Thought Exploration
     Then the action should be rejected
     And a clear error should explain why
 
-  @mvp-p2
+  @mvp-p2 @wip @wip
   Scenario: Allowing cycles when explicitly enabled for brainstorming
     Given a brainstorming session where cycles are allowed
     And thoughts "Feature A", "Feature B", and "Feature C"
@@ -166,7 +166,7 @@ Feature: AI-Assisted Thought Exploration
     And it should include all thoughts, connections, and scores
     And team members should be able to import and continue the work
 
-  @mvp-p1
+  @mvp-p1 @wip @wip
   Scenario: Loading a previous exploration to continue work
     Given Jordan saved an exploration "Q3 Churn Analysis" last week
     When Jordan loads the saved exploration
@@ -180,7 +180,7 @@ Feature: AI-Assisted Thought Exploration
   # Business Rule: Teams need visibility into exploration patterns to improve
   # their analytical processes over time.
 
-  @mvp-p2
+  @mvp-p2 @wip @wip
   Scenario: Viewing exploration statistics
     Given an exploration with:
       | metric          | value |
@@ -192,7 +192,7 @@ Feature: AI-Assisted Thought Exploration
     Then all metrics should be displayed
     And insights should suggest "Consider pruning low-scoring branches"
 
-  @mvp-p2
+  @mvp-p2 @wip @wip
   Scenario: Visualizing the exploration as a tree
     Given an exploration with multiple branches
     When Jordan requests a visual representation
