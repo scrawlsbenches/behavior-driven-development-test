@@ -111,23 +111,38 @@ class InMemoryPersistence:
 class FilePersistence:
     """
     File-based persistence using JSON files.
-    
+
     Suitable for development and small-scale usage.
+
+    Args:
+        base_dir: Directory to store files in.
+        filesystem: Optional FileSystem implementation for dependency injection.
+                   If not provided, uses RealFileSystem (actual disk I/O).
+                   For testing, pass InMemoryFileSystem.
+
+    Example for testing:
+        from graph_of_thought.core import InMemoryFileSystem
+        fs = InMemoryFileSystem()
+        persistence = FilePersistence("/data", filesystem=fs)
+        # ... run tests ...
+        fs.assert_written("/data/graph.json")
     """
-    
-    def __init__(self, base_dir: str | Path):
-        self.base_dir = Path(base_dir)
-        self.base_dir.mkdir(parents=True, exist_ok=True)
-    
-    def _graph_path(self, graph_id: str) -> Path:
-        return self.base_dir / f"{graph_id}.json"
-    
-    def _checkpoint_dir(self, graph_id: str) -> Path:
-        return self.base_dir / "checkpoints" / graph_id
-    
-    def _checkpoint_path(self, graph_id: str, checkpoint_id: str) -> Path:
-        return self._checkpoint_dir(graph_id) / f"{checkpoint_id}.json"
-    
+
+    def __init__(self, base_dir: str | Path, filesystem=None):
+        from ..core import RealFileSystem
+        self.base_dir = str(base_dir)
+        self._fs = filesystem or RealFileSystem()
+        self._fs.mkdir(self.base_dir, parents=True)
+
+    def _graph_path(self, graph_id: str) -> str:
+        return f"{self.base_dir}/{graph_id}.json"
+
+    def _checkpoint_dir(self, graph_id: str) -> str:
+        return f"{self.base_dir}/checkpoints/{graph_id}"
+
+    def _checkpoint_path(self, graph_id: str, checkpoint_id: str) -> str:
+        return f"{self._checkpoint_dir(graph_id)}/{checkpoint_id}.json"
+
     async def save_graph(
         self,
         graph_id: str,
@@ -142,32 +157,34 @@ class FilePersistence:
             "root_ids": root_ids,
             "metadata": metadata,
         }
-        
+
         path = self._graph_path(graph_id)
         try:
-            with open(path, "w") as f:
-                json.dump(data, f, indent=2, default=str)
+            content = json.dumps(data, indent=2, default=str).encode('utf-8')
+            self._fs.write(path, content)
         except Exception as e:
             raise PersistenceError("save_graph", e)
-    
+
     async def load_graph(
         self,
         graph_id: str,
     ) -> tuple[dict[str, Thought], list[Edge], list[str], dict[str, Any]] | None:
         path = self._graph_path(graph_id)
-        if not path.exists():
+        if not self._fs.exists(path):
             return None
-        
+
         try:
-            with open(path, "r") as f:
-                data = json.load(f)
-            
+            content = self._fs.read(path)
+            data = json.loads(content.decode('utf-8'))
+
             thoughts = {tid: Thought.from_dict(td) for tid, td in data["thoughts"].items()}
             edges = [Edge.from_dict(ed) for ed in data["edges"]]
             return thoughts, edges, data["root_ids"], data["metadata"]
+        except FileNotFoundError:
+            return None
         except Exception as e:
             raise PersistenceError("load_graph", e)
-    
+
     async def save_checkpoint(
         self,
         graph_id: str,
@@ -178,50 +195,51 @@ class FilePersistence:
         search_state: dict[str, Any],
     ) -> None:
         checkpoint_dir = self._checkpoint_dir(graph_id)
-        checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        
+        self._fs.mkdir(checkpoint_dir, parents=True)
+
         data = {
             "thoughts": {tid: t.to_dict() for tid, t in thoughts.items()},
             "edges": [e.to_dict() for e in edges],
             "root_ids": root_ids,
             "search_state": search_state,
         }
-        
+
         path = self._checkpoint_path(graph_id, checkpoint_id)
         try:
-            with open(path, "w") as f:
-                json.dump(data, f, indent=2, default=str)
+            content = json.dumps(data, indent=2, default=str).encode('utf-8')
+            self._fs.write(path, content)
         except Exception as e:
             raise PersistenceError("save_checkpoint", e)
-    
+
     async def load_checkpoint(
         self,
         graph_id: str,
         checkpoint_id: str,
     ) -> tuple[dict[str, Thought], list[Edge], list[str], dict[str, Any]] | None:
         path = self._checkpoint_path(graph_id, checkpoint_id)
-        if not path.exists():
+        if not self._fs.exists(path):
             return None
-        
+
         try:
-            with open(path, "r") as f:
-                data = json.load(f)
-            
+            content = self._fs.read(path)
+            data = json.loads(content.decode('utf-8'))
+
             thoughts = {tid: Thought.from_dict(td) for tid, td in data["thoughts"].items()}
             edges = [Edge.from_dict(ed) for ed in data["edges"]]
             return thoughts, edges, data["root_ids"], data["search_state"]
+        except FileNotFoundError:
+            return None
         except Exception as e:
             raise PersistenceError("load_checkpoint", e)
-    
+
     async def delete_graph(self, graph_id: str) -> bool:
         path = self._graph_path(graph_id)
-        if path.exists():
-            path.unlink()
+        if self._fs.exists(path):
+            self._fs.delete(path)
             # Also delete checkpoints
             checkpoint_dir = self._checkpoint_dir(graph_id)
-            if checkpoint_dir.exists():
-                import shutil
-                shutil.rmtree(checkpoint_dir)
+            if self._fs.exists(checkpoint_dir):
+                self._fs.rmtree(checkpoint_dir)
             return True
         return False
 

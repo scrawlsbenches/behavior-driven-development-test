@@ -675,51 +675,10 @@ def step_project_data_restored(context):
 # =============================================================================
 # In-Memory Filesystem for Testing
 # =============================================================================
-# This provides a mock filesystem for testing persistence operations without
-# actual disk I/O. Tracks all operations for assertions.
+# Use the InMemoryFileSystem from graph_of_thought.core for testing persistence
+# operations without actual disk I/O.
 
-class InMemoryFileSystem:
-    """Mock filesystem for testing persistence operations."""
-
-    def __init__(self):
-        self.files: Dict[str, bytes] = {}
-        self.operations: List[str] = []
-
-    def write(self, path: str, content: bytes) -> None:
-        self.files[path] = content
-        self.operations.append(f"write:{path}")
-
-    def read(self, path: str) -> bytes:
-        self.operations.append(f"read:{path}")
-        if path not in self.files:
-            raise FileNotFoundError(path)
-        return self.files[path]
-
-    def exists(self, path: str) -> bool:
-        return path in self.files
-
-    def delete(self, path: str) -> bool:
-        if path in self.files:
-            del self.files[path]
-            self.operations.append(f"delete:{path}")
-            return True
-        return False
-
-    def list_dir(self, prefix: str = "") -> List[str]:
-        return [p for p in self.files.keys() if p.startswith(prefix)]
-
-    def assert_written(self, path: str) -> None:
-        """Assert a specific file was written."""
-        assert f"write:{path}" in self.operations, f"File {path} was not written"
-
-    def assert_read(self, path: str) -> None:
-        """Assert a specific file was read."""
-        assert f"read:{path}" in self.operations, f"File {path} was not read"
-
-    def clear(self) -> None:
-        """Clear all files and operations."""
-        self.files.clear()
-        self.operations.clear()
+from graph_of_thought.core import InMemoryFileSystem
 
 
 def get_inmemory_fs(context) -> InMemoryFileSystem:
